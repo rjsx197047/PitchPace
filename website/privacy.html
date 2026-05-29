@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Privacy Policy — PitchPace</title>
+    <meta name="description" content="How PitchPace handles your data: a local-first app where your sessions stay on your device and your AI key stays in your browser." />
+    <meta name="theme-color" content="#09090b" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%2310b981'/%3E%3Cpath d='M6 16l4-4-4-4M12 16l4-4-4-4' stroke='white' stroke-width='2.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="assets/styles.css" />
+  </head>
+  <body>
+    <header class="nav">
+      <div class="container nav-inner">
+        <a class="nav-brand" href="index.html" aria-label="PitchPace home">
+          <span class="logo logo-sm" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-opacity="0.25" stroke-width="1.5" stroke-linecap="round" />
+              <path d="M6 16l4-4-4-4M12 16l4-4-4-4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </span>
+          <span class="wordmark">Pitch<span class="accent">Pace</span></span>
+        </a>
+        <nav class="nav-links" aria-label="Primary">
+          <a class="navlink" href="index.html#features">Features</a>
+          <a class="navlink" href="index.html#screens">Screens</a>
+          <a class="navlink" href="index.html#privacy">Your data</a>
+          <a class="navlink" href="index.html#download">Download</a>
+          <a class="navlink" href="privacy.html">Privacy</a>
+          <a class="navlink" href="terms.html">Terms</a>
+        </nav>
+        <div class="nav-cta">
+          <a class="btn btn-primary" href="index.html#download">
+            <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="m7 10 5 5 5-5" /><path d="M12 15V3" /></svg>
+            <span class="hide-sm">Download</span>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <main class="legal">
+      <div class="container">
+        <div class="legal-wrap">
+          <a class="back-link" href="index.html"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /><path d="M19 12H5" /></svg> Back to home</a>
+          <h1>Privacy Policy</h1>
+          <p class="updated">Last updated: 28 May 2026</p>
+
+          <p>
+            PitchPace is a <strong>local-first</strong> application. In plain terms:
+            the app runs on your own computer, your training data is saved in a file
+            on your device, and your AI key is stored only in your browser. We do not
+            operate a cloud service that collects or stores your personal training
+            data, and we have no user accounts. This policy explains exactly what that
+            means, and the limited data involved when you visit this website or use
+            third-party AI providers.
+          </p>
+
+          <div class="toc">
+            <h4>Contents</h4>
+            <ol>
+              <li><a href="#scope">Scope &amp; who we are</a></li>
+              <li><a href="#app-vs-site">The app vs. this website</a></li>
+              <li><a href="#device-data">Data stored on your device</a></li>
+              <li><a href="#api-keys">Your API key &amp; AI providers</a></li>
+              <li><a href="#site-data">What this website collects</a></li>
+              <li><a href="#cookies">Cookies &amp; local storage</a></li>
+              <li><a href="#third-parties">Third-party services</a></li>
+              <li><a href="#sharing">Data sharing &amp; selling</a></li>
+              <li><a href="#retention">Retention &amp; deletion</a></li>
+              <li><a href="#security">Security</a></li>
+              <li><a href="#children">Children's privacy</a></li>
+              <li><a href="#rights">Your rights</a></li>
+              <li><a href="#intl">International users</a></li>
+              <li><a href="#changes">Changes to this policy</a></li>
+              <li><a href="#contact">Contact</a></li>
+            </ol>
+          </div>
+
+          <h2 id="scope"><span class="n">1.</span>Scope &amp; who we are</h2>
+          <p>
+            This Privacy Policy covers (a) the PitchPace marketing website you are
+            currently visiting and (b) the PitchPace application you may download from
+            it. "PitchPace", "we", "us" and "our" refer to the maker of PitchPace,
+            reachable at <a class="inline" href="mailto:jaysidd@yahoo.com">jaysidd@yahoo.com</a>.
+            It does not cover third-party services you choose to connect (such as
+            Anthropic's Claude API), which are governed by their own privacy policies.
+          </p>
+
+          <h2 id="app-vs-site"><span class="n">2.</span>The app vs. this website</h2>
+          <p>This is an important distinction:</p>
+          <ul>
+            <li><strong>The PitchPace app</strong> is software you download and run on your own machine. We never receive your workouts, profile or notes. There is no PitchPace server holding your data.</li>
+            <li><strong>This website</strong> exists only to describe PitchPace and let you download it. It is a static site and does not require sign-in.</li>
+          </ul>
+
+          <h2 id="device-data"><span class="n">3.</span>Data stored on your device</h2>
+          <p>
+            When you run PitchPace, the following information is created and stored
+            <strong>locally on your computer</strong> — typically in a SQLite database
+            file (for example <code>backend/data/pitchpace.db</code>) and in your
+            browser's local storage:
+          </p>
+          <ul>
+            <li><strong>Profile</strong> — details you enter such as name, sport focus, primary event/position, age, height, weight, experience level, weekly target and goals.</li>
+            <li><strong>Workouts</strong> — sessions you log, including type, date, duration, distance, intensity (RPE), calories, per-activity metrics (e.g. sets, reps, rounds, pace) and free-text notes.</li>
+            <li><strong>Coach chats</strong> — messages exchanged with the AI coach, stored locally so your conversation persists.</li>
+            <li><strong>Settings</strong> — your preferences and your API key (see below).</li>
+          </ul>
+          <p>This data stays on your device unless <em>you</em> send it somewhere — for example, by enabling AI features that call an external provider, or by copying the database file yourself.</p>
+
+          <h2 id="api-keys"><span class="n">4.</span>Your API key &amp; AI providers</h2>
+          <p>PitchPace's AI features (coach, training plan, nutrition &amp; recovery) need a language model. You choose how:</p>
+          <ul>
+            <li><strong>Your own Claude API key.</strong> If you add an Anthropic (Claude) API key in Settings, it is stored <strong>only in your browser's local storage</strong> on your device. We never receive it. When you use an AI feature, your key and the relevant context (your profile, recent sessions and your message) are sent <strong>directly from your machine to Anthropic</strong> to generate a response. That request is subject to <a class="inline" href="https://www.anthropic.com/legal/privacy" target="_blank" rel="noopener">Anthropic's Privacy Policy</a> and your agreement with Anthropic, and any usage is billed to your own Anthropic account.</li>
+            <li><strong>Local Ollama (no key, fully offline).</strong> If you run a local <a class="inline" href="https://ollama.com" target="_blank" rel="noopener">Ollama</a> model, AI requests are processed on your own hardware and no data leaves your device.</li>
+          </ul>
+          <p>You can remove your key, switch providers, or disable AI features at any time. Using your own key means <strong>you</strong> control the relationship (and cost) with the AI provider.</p>
+
+          <h2 id="site-data"><span class="n">5.</span>What this website collects</h2>
+          <p>
+            We aim to collect as little as possible. We do not ask you to create an
+            account and we do not run advertising or behavioural analytics on this site.
+            However, like virtually all websites, the infrastructure that serves these
+            pages (our hosting/CDN provider — see below) automatically processes basic
+            technical request data such as your IP address, the page requested, the
+            time, your browser type (user-agent) and referrer. This is used to deliver
+            the site, keep it secure, and prevent abuse. We do not use it to build a
+            profile of you.
+          </p>
+
+          <h2 id="cookies"><span class="n">6.</span>Cookies &amp; local storage</h2>
+          <ul>
+            <li><strong>This website</strong> sets no advertising or tracking cookies. Our hosting/CDN provider may set strictly-necessary cookies for security or load-balancing.</li>
+            <li><strong>The app</strong> uses your browser's <em>local storage</em> (not cookies) to remember your settings and API key on your own device. This never leaves your machine via PitchPace.</li>
+          </ul>
+
+          <h2 id="third-parties"><span class="n">7.</span>Third-party services</h2>
+          <p>Depending on how you use PitchPace, these third parties may be involved. Each has its own privacy policy:</p>
+          <ul>
+            <li><strong>Anthropic (Claude API)</strong> — only if you add a Claude key and use AI features. Receives your prompts and context to generate responses.</li>
+            <li><strong>Ollama</strong> — if you choose local AI. Runs on your own device; nothing is sent externally.</li>
+            <li><strong>Cloudflare</strong> — serves and protects this website (and may serve the download). Processes technical request data as described above.</li>
+            <li><strong>Railway</strong> — if a hosted live demo is offered, it runs the demo app. A demo instance is for evaluation only; do not store private data in it.</li>
+          </ul>
+
+          <h2 id="sharing"><span class="n">8.</span>Data sharing &amp; selling</h2>
+          <p>
+            We do <strong>not</strong> sell, rent or trade personal information. We
+            cannot share your training data because we never receive it. The only data
+            "sharing" that occurs is the direct, user-initiated connection from your
+            device to an AI provider you have configured with your own key.
+          </p>
+
+          <h2 id="retention"><span class="n">9.</span>Retention &amp; deletion</h2>
+          <p>
+            Because your data lives on your device, <strong>you control retention</strong>.
+            Delete individual sessions in the app, clear your browser's local storage to
+            remove your settings and key, or delete the local database file to remove
+            everything. Uninstalling the app and deleting its folder removes all locally
+            stored PitchPace data. Data sent to an AI provider is retained according to
+            that provider's policies.
+          </p>
+
+          <h2 id="security"><span class="n">10.</span>Security</h2>
+          <p>
+            The app applies sensible security headers and keeps your key in your browser
+            rather than on a shared server. That said, the security of data on your
+            device ultimately depends on your own machine's security (disk encryption,
+            screen lock, who has access). Treat your API key like a password, and don't
+            expose a locally-run instance to the public internet without adding your own
+            authentication.
+          </p>
+
+          <h2 id="children"><span class="n">11.</span>Children's privacy</h2>
+          <p>
+            PitchPace is not directed to children under 13 (or the minimum age in your
+            jurisdiction), and we do not knowingly collect data from them. Younger
+            athletes should use PitchPace only with the involvement of a parent, guardian
+            or coach.
+          </p>
+
+          <h2 id="rights"><span class="n">12.</span>Your rights</h2>
+          <p>
+            Depending on where you live, you may have rights to access, correct, delete
+            or export personal data. Because your PitchPace data is stored locally, you
+            can exercise these rights directly within the app and your browser at any
+            time, without needing to contact us. For any data handled by a third-party AI
+            provider, contact that provider. Questions? Email us — see below.
+          </p>
+
+          <h2 id="intl"><span class="n">13.</span>International users</h2>
+          <p>
+            PitchPace can be downloaded and used worldwide. Your training data does not
+            cross borders through us, since it stays on your device. If you use a
+            third-party AI provider, your requests may be processed in the countries
+            where that provider operates.
+          </p>
+
+          <h2 id="changes"><span class="n">14.</span>Changes to this policy</h2>
+          <p>
+            We may update this policy as PitchPace evolves. We'll revise the "Last
+            updated" date above and, for material changes, aim to highlight them on this
+            page. Continued use after an update constitutes acceptance of the revised
+            policy.
+          </p>
+
+          <h2 id="contact"><span class="n">15.</span>Contact</h2>
+          <p>
+            Questions about privacy? Email
+            <a class="inline" href="mailto:jaysidd@yahoo.com">jaysidd@yahoo.com</a>.
+            See also our <a class="inline" href="terms.html">Terms &amp; Conditions</a>.
+          </p>
+        </div>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-bottom" style="border-top: 0; margin-top: 0; padding-top: 0;">
+          <span>© 2026 PitchPace. All rights reserved.</span>
+          <span><a href="index.html">Home</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a></span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

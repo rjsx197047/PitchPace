@@ -1,0 +1,61 @@
+{
+  "summary": {
+    "url": "http://localhost:8000",
+    "provider": "ollama",
+    "model": "llama3.2:latest",
+    "steps": 26,
+    "maxSteps": 26,
+    "tests": 0,
+    "passed": 0,
+    "failed": 0,
+    "bugs": 0,
+    "testIssues": 0,
+    "correctedTests": 0,
+    "realBugs": 0,
+    "falseFailures": 0,
+    "timestamp": "2026-05-24T21:30:18.832Z"
+  },
+  "appModel": {
+    "startUrl": "http://localhost:8000",
+    "routes": [
+      {
+        "url": "about:blank",
+        "title": "",
+        "status": 200,
+        "notes": "auto: extracted",
+        "visitedAt": "2026-05-24T21:28:17.644Z"
+      },
+      {
+        "url": "http://localhost:8000/",
+        "title": "PitchPace — Soccer & Track Training",
+        "status": 200,
+        "notes": "auto: navigated",
+        "visitedAt": "2026-05-24T21:28:36.455Z"
+      }
+    ],
+    "auth": {
+      "hasLogin": false,
+      "hasSignup": false,
+      "hasLogout": false,
+      "loggedIn": false,
+      "notes": ""
+    },
+    "entities": [],
+    "flows": [],
+    "forms": []
+  },
+  "tests": [],
+  "bugs": [],
+  "analysis": {
+    "summary": {
+      "total": 0,
+      "passed": 0,
+      "failed": 0,
+      "realBugs": 0,
+      "falseFailures": 0
+    },
+    "testIssues": [],
+    "correctedTests": []
+  },
+  "events": 80
+}

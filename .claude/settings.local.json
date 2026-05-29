@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "fe=5181; be=8000; if lsof -nP -iTCP:$fe -sTCP:LISTEN >/dev/null 2>&1; then u=\"🔗 http://localhost:$fe\"; elif lsof -nP -iTCP:$be -sTCP:LISTEN >/dev/null 2>&1; then u=\"🔗 http://localhost:$be (API only — frontend not running)\"; else u=\"⚠ Dev server not running — run ./dev.sh (app: http://localhost:5181)\"; fi; printf '{\"systemMessage\":\"%s\"}' \"$u\"",
+            "timeout": 5,
+            "statusMessage": "Checking dev server…"
+          }
+        ]
+      }
+    ]
+  }
+}

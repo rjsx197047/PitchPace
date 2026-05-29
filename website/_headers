@@ -1,0 +1,16 @@
+# Cloudflare Pages — security headers + caching for the PitchPace marketing site.
+
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Permissions-Policy: geolocation=(), microphone=(), camera=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'
+
+# Long-cache fingerprint-free static assets (safe: low churn, and HTML is always revalidated)
+/assets/*
+  Cache-Control: public, max-age=86400
+
+/downloads/*
+  Cache-Control: public, max-age=3600

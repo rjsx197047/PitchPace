@@ -1,0 +1,16 @@
+# Railway deployment config. Builds from the Dockerfile and serves on $PORT.
+[build]
+builder = "dockerfile"
+
+[deploy]
+startCommand = "uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port $PORT"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 100
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
+
+# Notes:
+# • Set ANTHROPIC_API_KEY in Railway → Variables only if you want a server-side
+#   fallback key for a public demo. Otherwise users add their own key in the UI.
+# • Railway's filesystem is ephemeral: the SQLite demo DB resets on redeploy.
+#   Attach a volume mounted at /app/backend/data to persist it.

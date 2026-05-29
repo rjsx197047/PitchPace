@@ -1,0 +1,12 @@
+**/node_modules
+**/__pycache__
+**/*.pyc
+**/.DS_Store
+.git
+.claude
+qa-reports
+website
+backend/data
+frontend/dist
+.venv
+*.db

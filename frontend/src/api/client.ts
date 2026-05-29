@@ -1,0 +1,190 @@
+// ─────────────────────────────────────────────────────────────────────────
+// API client — one module owns every backend interaction.
+//
+// Paths are same-origin /api/*; Vite proxies them to FastAPI on :8000 in dev.
+// The Claude key (set via Settings) is attached to AI requests, mirroring the
+// pattern used by the other apps in this workspace. Keys live only in the
+// browser's localStorage and travel per-request; nothing is stored server-side.
+// ─────────────────────────────────────────────────────────────────────────
+
+export const API_KEY_STORAGE = 'claude_api_key';
+
+export function getApiKey(): string | null {
+  try {
+    return localStorage.getItem(API_KEY_STORAGE);
+  } catch {
+    return null;
+  }
+}
+
+export function setApiKey(key: string | null): void {
+  try {
+    if (key && key.trim()) localStorage.setItem(API_KEY_STORAGE, key.trim());
+    else localStorage.removeItem(API_KEY_STORAGE);
+  } catch {
+    /* localStorage may be disabled (private mode) — ignore. */
+  }
+}
+
+async function req<T>(url: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(url, init);
+  if (!res.ok) {
+    let detail = `${res.status} ${res.statusText}`;
+    try {
+      const j = await res.json();
+      if (j?.detail) detail = typeof j.detail === 'string' ? j.detail : JSON.stringify(j.detail);
+    } catch {
+      /* not JSON */
+    }
+    throw new Error(detail);
+  }
+  return (await res.json()) as T;
+}
+
+function postJson<T>(url: string, body: unknown): Promise<T> {
+  return req<T>(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+
+// ── Types ───────────────────────────────────────────────────────────────
+
+export type SportFocus = 'soccer' | 'track' | 'both';
+export type Experience = 'beginner' | 'intermediate' | 'advanced';
+
+export interface Profile {
+  name: string;
+  sport_focus: SportFocus;
+  primary_event: string;
+  age: number | null;
+  height_cm: number | null;
+  weight_kg: number | null;
+  experience: Experience;
+  weekly_target: number;
+  goals: string;
+}
+
+export interface Workout {
+  id: number;
+  date: string;
+  type: string;
+  title: string;
+  duration_min: number;
+  distance_mi: number;
+  intensity: number;
+  calories: number | null;
+  metrics: Record<string, unknown>;
+  notes: string;
+  created_at: string;
+}
+
+export type WorkoutInput = Omit<Workout, 'id' | 'created_at'>;
+
+export interface WeekPoint {
+  week: string;
+  label: string;
+  minutes: number;
+  distance: number;
+  load: number;
+  sessions: number;
+}
+
+export interface Stats {
+  totals: {
+    sessions: number;
+    distance_mi: number;
+    minutes: number;
+    hours: number;
+    avg_intensity: number;
+  };
+  this_week: {
+    sessions: number;
+    target: number;
+    minutes: number;
+    distance_mi: number;
+    load: number;
+  };
+  load: {
+    acute: number;
+    chronic_weekly: number;
+    acwr: number;
+    status: 'no-data' | 'undertraining' | 'optimal' | 'caution' | 'high-risk';
+  };
+  streak_days: number;
+  by_type: Record<string, number>;
+  weeks: WeekPoint[];
+}
+
+export interface Health {
+  status: string;
+  app: string;
+  ollama_available: boolean;
+  workout_types: string[];
+}
+
+export interface ChatMsg {
+  id?: number;
+  role: 'user' | 'assistant';
+  content: string;
+  created_at?: string;
+}
+
+export interface CoachResult {
+  text: string;
+  backend: 'claude' | 'ollama' | 'none';
+}
+
+// ── Endpoints ─────────────────────────────────────────────────────────────
+
+export const getHealth = () => req<Health>('/api/health');
+
+export const getProfile = () => req<Profile>('/api/profile');
+export const updateProfile = (p: Partial<Profile>) =>
+  req<Profile>('/api/profile', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(p),
+  });
+
+export const getWorkouts = () =>
+  req<{ workouts: Workout[] }>('/api/workouts').then((r) => r.workouts);
+
+export const createWorkout = (w: WorkoutInput) =>
+  postJson<Workout>('/api/workouts', w);
+
+export const updateWorkout = (id: number, w: Partial<WorkoutInput>) =>
+  req<Workout>(`/api/workouts/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(w),
+  });
+
+export const deleteWorkout = (id: number) =>
+  req<{ deleted: number }>(`/api/workouts/${id}`, { method: 'DELETE' });
+
+export const getStats = () => req<Stats>('/api/stats');
+
+// ── AI coach ────────────────────────────────────────────────────────────
+
+export const getChat = () =>
+  req<{ messages: ChatMsg[] }>('/api/chat').then((r) => r.messages);
+
+export const clearChat = () => req<{ cleared: boolean }>('/api/chat', { method: 'DELETE' });
+
+export const sendChat = (message: string) =>
+  postJson<{ reply: string; backend: string; message: ChatMsg }>('/api/chat', {
+    message,
+    api_key: getApiKey() ?? undefined,
+  });
+
+const coach = (kind: 'plan' | 'nutrition' | 'recovery', focus?: string) =>
+  postJson<CoachResult>(`/api/coach/${kind}`, {
+    focus: focus || undefined,
+    api_key: getApiKey() ?? undefined,
+  });
+
+export const coachPlan = (focus?: string) => coach('plan', focus);
+export const coachNutrition = (focus?: string) => coach('nutrition', focus);
+export const coachRecovery = (focus?: string) => coach('recovery', focus);

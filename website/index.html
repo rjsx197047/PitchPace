@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PitchPace — Train like you mean it. Soccer & track training, AI-coached.</title>
+    <meta
+      name="description"
+      content="PitchPace is a private, local-first training tracker for soccer and track athletes. Log every session, watch your training load, and get an AI coach — using your own API key. Open source on GitHub."
+    />
+    <meta name="theme-color" content="#09090b" />
+    <link rel="preload" as="image" href="assets/screenshots/dashboard.jpg" />
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="PitchPace — Soccer & Track Training, AI-coached" />
+    <meta
+      property="og:description"
+      content="Open source, private training tracker. Log sessions, watch your load, and get an AI coach with your own API key. MIT licensed on GitHub."
+    />
+    <meta property="og:image" content="assets/screenshots/dashboard.jpg" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%2310b981'/%3E%3Cpath d='M6 16l4-4-4-4M12 16l4-4-4-4' stroke='white' stroke-width='2.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="assets/styles.css" />
+  </head>
+  <body>
+    <!-- ── Nav ─────────────────────────────────────────────────────────── -->
+    <header class="nav" id="nav">
+      <div class="container nav-inner">
+        <a class="nav-brand" href="#top" aria-label="PitchPace home">
+          <span class="logo logo-sm" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-opacity="0.25" stroke-width="1.5" stroke-linecap="round" />
+              <path d="M6 16l4-4-4-4M12 16l4-4-4-4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </span>
+          <span class="wordmark">Pitch<span class="accent">Pace</span></span>
+        </a>
+        <nav class="nav-links" aria-label="Primary">
+          <a class="navlink" href="#features">Features</a>
+          <a class="navlink" href="#screens">Screens</a>
+          <a class="navlink" href="#privacy">Your data</a>
+          <a class="navlink" href="#get-started">Get Started</a>
+          <a class="navlink" href="privacy.html">Privacy</a>
+          <a class="navlink" href="terms.html">Terms</a>
+        </nav>
+        <div class="nav-cta">
+          <a class="btn btn-primary" href="https://github.com/rjsx197047/PitchPace" target="_blank" rel="noopener noreferrer">
+            <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.868-.013-1.703-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.89 1.529 2.341 1.545 2.91 1.184.092-.923.35-1.545.636-1.9-2.22-.252-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.579.688.481C19.138 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+            <span class="hide-sm">GitHub</span>
+          </a>
+          <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M4 12h16M4 6h16M4 18h16" /></svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main id="top">
+      <!-- ── Hero ──────────────────────────────────────────────────────── -->
+      <section class="hero">
+        <div class="container">
+          <span class="eyebrow">Built for soccer &amp; track athletes</span>
+          <h1>Train like you mean it,<br /><span class="accent">PitchPace</span>.</h1>
+          <p class="lede">
+            A private, local-first training tracker. Log every session, keep your
+            training load in the safe zone, and get an AI coach that plans your
+            week, meals and recovery — powered by <strong>your own API key</strong>.
+          </p>
+          <div class="hero-cta">
+            <a class="btn btn-primary btn-lg" href="https://github.com/rjsx197047/PitchPace" target="_blank" rel="noopener noreferrer">
+              <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.868-.013-1.703-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.89 1.529 2.341 1.545 2.91 1.184.092-.923.35-1.545.636-1.9-2.22-.252-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.579.688.481C19.138 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+              View on GitHub
+            </a>
+            <a class="btn btn-ghost btn-lg" href="#features">See what's inside
+              <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+            </a>
+          </div>
+          <p class="hero-sub">Open source on GitHub. No account. No tracking. Runs entirely on your machine.</p>
+
+          <div class="hero-shot reveal">
+            <div class="frame">
+              <div class="frame-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">localhost:8000 — PitchPace</span></div>
+              <img src="assets/screenshots/dashboard.jpg" width="1600" alt="PitchPace dashboard showing weekly load, an 8-week trend chart, the acute:chronic workload gauge, and a session-type breakdown." />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Trust strip ───────────────────────────────────────────────── -->
+      <section class="trust" aria-label="Why PitchPace">
+        <div class="container">
+          <div class="trust-grid">
+            <div class="trust-item">
+              <span class="ti-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z" /><circle cx="16.5" cy="7.5" r=".5" fill="currentColor" /></svg></span>
+              <div><b>Bring your own key</b><span>Your Anthropic key, or none at all</span></div>
+            </div>
+            <div class="trust-item">
+              <span class="ti-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16" /></svg></span>
+              <div><b>Local-first</b><span>Runs entirely on your computer</span></div>
+            </div>
+            <div class="trust-item">
+              <span class="ti-icon"><svg class="icon" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg></span>
+              <div><b>Your data stays yours</b><span>Stored in a local file — never ours</span></div>
+            </div>
+            <div class="trust-item">
+              <span class="ti-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M12 2v20" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg></span>
+              <div><b>Open source MIT</b><span>Fork, inspect, modify and deploy</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Features ──────────────────────────────────────────────────── -->
+      <section id="features">
+        <div class="container">
+          <div class="section-head reveal">
+            <span class="eyebrow">Everything in one place</span>
+            <h2>A complete training cockpit</h2>
+            <p>Six tools that turn scattered sessions into a clear, coached plan — tuned to how soccer and track athletes actually train.</p>
+          </div>
+          <div class="features-grid">
+            <article class="feature reveal">
+              <span class="f-icon"><svg class="icon" viewBox="0 0 24 24"><rect width="7" height="9" x="3" y="3" rx="1" /><rect width="7" height="5" x="14" y="3" rx="1" /><rect width="7" height="9" x="14" y="12" rx="1" /><rect width="7" height="5" x="3" y="16" rx="1" /></svg></span>
+              <h3>Dashboard</h3>
+              <p>Load, trends and training balance at a glance — including an acute:chronic workload ratio to keep you out of the injury red zone.</p>
+            </article>
+            <article class="feature reveal">
+              <span class="f-icon"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M8 12h8" /><path d="M12 8v8" /></svg></span>
+              <h3>Log Workout</h3>
+              <p>Record a match, track session, gym lift, boxing round or recovery day — each activity type with its own tailored detail fields.</p>
+            </article>
+            <article class="feature reveal">
+              <span class="f-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /><path d="M12 7v5l4 2" /></svg></span>
+              <h3>History</h3>
+              <p>Browse, search, filter, edit and review every session you've ever logged — with intensity, distance and notes at your fingertips.</p>
+            </article>
+            <article class="feature reveal">
+              <span class="f-icon"><svg class="icon" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2" /><path d="M3 10h18" /><path d="M8 2v4" /><path d="M16 2v4" /><path d="M8 14h.01" /><path d="M12 14h4" /><path d="M8 18h.01" /><path d="M12 18h4" /></svg></span>
+              <h3>Training Plan</h3>
+              <p>An AI-built weekly plan tuned to your current load and goals — progressive, periodised and respectful of your recovery.</p>
+            </article>
+            <article class="feature reveal">
+              <span class="f-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /><path d="M7 9h10" /><path d="M7 13h6" /></svg></span>
+              <h3>AI Coach</h3>
+              <p>Chat for advice, workouts and game prep. It already knows your profile, weekly load and recent sessions — so the answers fit you.</p>
+            </article>
+            <article class="feature reveal">
+              <span class="f-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M7 21h10" /><path d="M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9Z" /><path d="M11.38 12a2.4 2.4 0 0 1-.4-4.77 2.4 2.4 0 0 1 3.2-2.77 2.4 2.4 0 0 1 3.47-.63 2.4 2.4 0 0 1 3.37 3.37 2.4 2.4 0 0 1-1.1 3.7 2.51 2.51 0 0 1 .03 1.1" /><path d="m13 12 4-4" /></svg></span>
+              <h3>Nutrition &amp; Recovery</h3>
+              <p>Fuelling and recovery guidance built around your week — sleep, mobility, deload timing and what to eat to back up hard days.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Screens ───────────────────────────────────────────────────── -->
+      <section id="screens">
+        <div class="container">
+          <div class="section-head reveal">
+            <span class="eyebrow">A closer look</span>
+            <h2>Calm, fast and focused</h2>
+            <p>A clean dark interface that gets out of your way. Here's PitchPace running with a few weeks of training logged.</p>
+          </div>
+          <div class="screens">
+            <div class="screen-card wide reveal">
+              <div class="frame">
+                <div class="frame-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">localhost:8000 — Log Workout</span></div>
+                <img src="assets/screenshots/log.jpg" width="1600" alt="The Log Workout screen with a grid of activity types — Match, Sprint, Weightlifting, Calisthenics, Boxing and more — and the Boxing-specific fields: rounds, round length, format and punches thrown." />
+              </div>
+              <div class="cap"><b>Log any activity — with the right fields</b><p>Pick from matches, runs, lifts, calisthenics, plyometrics, cross-training or boxing. Each type shows its own detail fields, so a sprint session and a boxing round are both logged properly.</p></div>
+            </div>
+            <div class="screen-card reveal">
+              <div class="frame">
+                <div class="frame-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">History</span></div>
+                <img src="assets/screenshots/history.jpg" width="1200" alt="The History screen showing a searchable, filterable list of logged sessions with type, duration and RPE." />
+              </div>
+              <div class="cap"><b>Every session, searchable</b><p>Filter by type, search your notes, and edit any entry in place.</p></div>
+            </div>
+            <div class="screen-card reveal">
+              <div class="frame">
+                <div class="frame-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">AI Coach</span></div>
+                <img src="assets/screenshots/coach.jpg" width="1200" alt="The AI Coach screen, ready to chat, showing suggested questions and a 'Local Ollama' option." />
+              </div>
+              <div class="cap"><b>A coach that knows your data</b><p>Use Claude with your key, or run it fully offline with local Ollama.</p></div>
+            </div>
+            <div class="screen-card wide reveal">
+              <div class="frame">
+                <div class="frame-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">localhost:8000 — Home</span></div>
+                <img src="assets/screenshots/home.jpg" width="1600" alt="The PitchPace home screen with headline stats and quick links to every feature." />
+              </div>
+              <div class="cap"><b>One calm home base</b><p>Your headline numbers and a jump-off point to everything PitchPace can do.</p></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Privacy / BYO key ─────────────────────────────────────────── -->
+      <section id="privacy">
+        <div class="container">
+          <div class="split">
+            <div class="reveal">
+              <span class="eyebrow">Private by design</span>
+              <h2 style="font-size: clamp(1.8rem, 3.4vw, 2.5rem); margin-top: 18px;">Your data and your key never touch our servers</h2>
+              <p style="color: var(--muted); font-size: 1.05rem; margin-top: 14px;">
+                PitchPace runs on your computer. Your sessions live in a local
+                database file; your AI key lives in your browser. We don't run a
+                backend for your data, we don't have accounts, and we can't see
+                any of it.
+              </p>
+              <ul class="checklist">
+                <li><svg class="icon" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></svg><span><b>You bring your own API key.</b> Add your Anthropic (Claude) key in Settings — it's stored only in your browser and sent only to Anthropic.</span></li>
+                <li><svg class="icon" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></svg><span><b>Or use no key at all.</b> Point PitchPace at a local <strong>Ollama</strong> model and every AI feature runs fully offline.</span></li>
+                <li><svg class="icon" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></svg><span><b>Workouts stay local.</b> Everything is saved to a SQLite file on your machine — easy to back up, move or delete.</span></li>
+                <li><svg class="icon" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></svg><span><b>No tracking.</b> This site sets no advertising or analytics cookies. The download is just the app.</span></li>
+              </ul>
+            </div>
+            <div class="keycard reveal">
+              <div class="keyrow">
+                <span class="kr-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z" /><circle cx="16.5" cy="7.5" r=".5" fill="currentColor" /></svg></span>
+                <div><b>Claude (your key)</b><p>Best-quality coaching. Key stored in-browser only; requests go straight to Anthropic under your account.</p></div>
+              </div>
+              <div class="keyrow">
+                <span class="kr-icon"><svg class="icon" viewBox="0 0 24 24"><rect width="16" height="16" x="4" y="4" rx="2" /><rect width="6" height="6" x="9" y="9" rx="1" /><path d="M15 2v2" /><path d="M15 20v2" /><path d="M2 15h2" /><path d="M2 9h2" /><path d="M20 15h2" /><path d="M20 9h2" /><path d="M9 2v2" /><path d="M9 20v2" /></svg></span>
+                <div><b>Local Ollama (no key)</b><p>Runs a model on your own hardware. Slower, but 100% offline and free.</p></div>
+              </div>
+              <div class="keyrow">
+                <span class="kr-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 0 0-6 0v4" /><rect width="18" height="11" x="3" y="11" rx="2" /></svg></span>
+                <div><b>You're always in control</b><p>Swap keys, switch to local, or clear your data anytime. Read the <a class="inline" href="privacy.html">Privacy Policy</a>.</p></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Get Started ────────────────────────────────────────────────── -->
+      <section id="get-started">
+        <div class="container download">
+          <div class="section-head reveal" style="margin-left: auto; margin-right: auto; text-align: center;">
+            <span class="eyebrow">Get Started</span>
+            <h2>Fork on GitHub, run locally</h2>
+            <p style="margin-left: auto; margin-right: auto;">Clone the repo, start one script, and open it in your browser. Needs Python 3.11+ and Node 20+. The entire source is yours to inspect, modify and self-host.</p>
+          </div>
+
+          <a class="btn btn-primary btn-lg reveal" href="https://github.com/rjsx197047/PitchPace" target="_blank" rel="noopener noreferrer">
+            <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.868-.013-1.703-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.89 1.529 2.341 1.545 2.91 1.184.092-.923.35-1.545.636-1.9-2.22-.252-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.579.688.481C19.138 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+            View on GitHub
+          </a>
+          <p class="dl-note">Open source MIT license. Full source, no hidden backend.</p>
+
+          <div class="steps">
+            <div class="step reveal">
+              <span class="num">1</span>
+              <h3>Clone the repo</h3>
+              <p>Download the source from GitHub to your machine.</p>
+              <div class="code">git clone https://github.com/rjsx197047/PitchPace.git
+cd pitchpace</div>
+            </div>
+            <div class="step reveal">
+              <span class="num">2</span>
+              <h3>Start the app</h3>
+              <p>One script builds the UI and serves everything on a single port.</p>
+              <div class="code">./start.sh
+# → http://localhost:8000</div>
+            </div>
+            <div class="step reveal">
+              <span class="num">3</span>
+              <h3>Add your API key (optional)</h3>
+              <p>In Settings, paste your Anthropic Claude key — or use local Ollama for offline AI.</p>
+              <div class="code">Settings → Claude API key
+(stored in browser only)</div>
+            </div>
+          </div>
+
+          <div class="cta-band reveal">
+            <h2>Own your training data, own your code.</h2>
+            <p>Open source, MIT licensed, and fully private. You control everything — fork it, deploy it, modify it. Start logging in minutes.</p>
+            <a class="btn btn-primary btn-lg" href="https://github.com/rjsx197047/PitchPace" target="_blank" rel="noopener noreferrer">
+              <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.868-.013-1.703-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.89 1.529 2.341 1.545 2.91 1.184.092-.923.35-1.545.636-1.9-2.22-.252-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.579.688.481C19.138 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+              Fork on GitHub
+            </a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ── Footer ──────────────────────────────────────────────────────── -->
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-top">
+          <div class="footer-brand">
+            <a class="nav-brand" href="#top">
+              <span class="logo logo-sm" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-opacity="0.25" stroke-width="1.5" stroke-linecap="round" />
+                  <path d="M6 16l4-4-4-4M12 16l4-4-4-4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
+              <span class="wordmark">Pitch<span class="accent">Pace</span></span>
+            </a>
+            <p>The private, local-first training tracker for soccer and track athletes. Open source. Built with FastAPI and React. Bring your own AI key.</p>
+          </div>
+          <div class="footer-cols">
+            <div class="footer-col">
+              <h4>Product</h4>
+              <a href="#features">Features</a>
+              <a href="#screens">Screens</a>
+              <a href="#privacy">Your data</a>
+              <a href="https://github.com/rjsx197047/PitchPace" target="_blank" rel="noopener noreferrer">GitHub</a>
+            </div>
+            <div class="footer-col">
+              <h4>Legal</h4>
+              <a href="privacy.html">Privacy Policy</a>
+              <a href="terms.html">Terms &amp; Conditions</a>
+            </div>
+            <div class="footer-col">
+              <h4>Contact</h4>
+              <a href="mailto:jaysidd@yahoo.com">jaysidd@yahoo.com</a>
+            </div>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <span>© 2026 PitchPace. All rights reserved.</span>
+          <span>Not affiliated with Anthropic or Ollama. "Claude" is a trademark of Anthropic.</span>
+        </div>
+      </div>
+    </footer>
+
+    <script src="assets/main.js"></script>
+  </body>
+</html>
