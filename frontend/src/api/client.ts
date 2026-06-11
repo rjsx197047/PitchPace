@@ -78,6 +78,8 @@ export interface Workout {
   metrics: Record<string, unknown>;
   notes: string;
   created_at: string;
+  /** True when saved to the offline outbox, not yet synced to the server. */
+  queued?: boolean;
 }
 
 export type WorkoutInput = Omit<Workout, 'id' | 'created_at'>;
@@ -151,8 +153,67 @@ export const updateProfile = (p: Partial<Profile>) =>
 export const getWorkouts = () =>
   req<{ workouts: Workout[] }>('/api/workouts').then((r) => r.workouts);
 
-export const createWorkout = (w: WorkoutInput) =>
-  postJson<Workout>('/api/workouts', w);
+// ── Offline outbox ──────────────────────────────────────────────────────
+// When a save fails because the network is down (PWA on the pitch), the
+// workout is queued in localStorage and synced when the connection returns.
+
+const OUTBOX_KEY = 'pp_outbox_v1';
+
+function readOutbox(): WorkoutInput[] {
+  try {
+    return JSON.parse(localStorage.getItem(OUTBOX_KEY) || '[]') as WorkoutInput[];
+  } catch {
+    return [];
+  }
+}
+
+function writeOutbox(list: WorkoutInput[]): void {
+  try {
+    localStorage.setItem(OUTBOX_KEY, JSON.stringify(list));
+  } catch {
+    /* storage full/disabled — nothing else we can do */
+  }
+}
+
+export const outboxCount = (): number => readOutbox().length;
+
+/** fetch() rejects with TypeError when the network itself is unreachable. */
+const isNetworkError = (e: unknown): boolean => e instanceof TypeError;
+
+/** Push queued workouts to the server; returns how many synced. */
+export async function flushOutbox(): Promise<number> {
+  const queue = readOutbox();
+  if (!queue.length) return 0;
+  let synced = 0;
+  while (queue.length) {
+    try {
+      await postJson<Workout>('/api/workouts', queue[0]);
+      synced++;
+    } catch (e) {
+      if (isNetworkError(e)) break; // still offline — try again later
+      // Server rejected it (bad data): drop it rather than poison the queue.
+    }
+    queue.shift();
+    writeOutbox(queue);
+  }
+  if (synced > 0) {
+    window.dispatchEvent(new CustomEvent('pp:outbox-synced', { detail: { count: synced } }));
+  }
+  return synced;
+}
+
+export const createWorkout = async (w: WorkoutInput): Promise<Workout> => {
+  try {
+    return await postJson<Workout>('/api/workouts', w);
+  } catch (e) {
+    if (isNetworkError(e)) {
+      writeOutbox([...readOutbox(), w]);
+      window.dispatchEvent(new CustomEvent('pp:workout-queued'));
+      return { ...w, id: -Date.now(), created_at: new Date().toISOString(), queued: true };
+    }
+    throw e;
+  }
+};
 
 export const updateWorkout = (id: number, w: Partial<WorkoutInput>) =>
   req<Workout>(`/api/workouts/${id}`, {
@@ -165,6 +226,21 @@ export const deleteWorkout = (id: number) =>
   req<{ deleted: number }>(`/api/workouts/${id}`, { method: 'DELETE' });
 
 export const getStats = () => req<Stats>('/api/stats');
+
+// ── Import (wearables / fitness apps) ───────────────────────────────────
+
+export interface ImportParseResult {
+  source: string;
+  workouts: WorkoutInput[];
+}
+
+/** Parse a TCX / GPX / FIT / Apple Health file into workout drafts. */
+export const parseImportFile = (file: File): Promise<ImportParseResult> => {
+  const fd = new FormData();
+  fd.append('file', file);
+  // No Content-Type header — the browser sets the multipart boundary.
+  return req<ImportParseResult>('/api/import/parse', { method: 'POST', body: fd });
+};
 
 // ── AI coach ────────────────────────────────────────────────────────────
 

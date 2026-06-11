@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Pencil, Trash2, Search, Check, X } from 'lucide-react';
+import { Pencil, Trash2, Search, Check, Download, X } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -83,9 +83,27 @@ export function HistoryTab() {
             className="pl-9"
           />
         </div>
-        <span className="text-xs text-zinc-500">
-          {filtered.length} of {workouts.length} sessions
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-zinc-500">
+            {filtered.length} of {workouts.length} sessions
+          </span>
+          <a
+            href="/api/export.json"
+            download
+            className="inline-flex items-center gap-1 rounded-full border border-zinc-800 bg-zinc-900/40 px-3 py-1 text-xs text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
+            title="Download all data as JSON"
+          >
+            <Download className="h-3 w-3" /> JSON
+          </a>
+          <a
+            href="/api/export.csv"
+            download
+            className="inline-flex items-center gap-1 rounded-full border border-zinc-800 bg-zinc-900/40 px-3 py-1 text-xs text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
+            title="Download sessions as CSV"
+          >
+            <Download className="h-3 w-3" /> CSV
+          </a>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-1.5">

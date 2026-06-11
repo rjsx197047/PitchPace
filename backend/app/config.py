@@ -6,10 +6,11 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-# Project paths
+# Project paths. PITCHPACE_DATA_DIR lets tests (and container volumes) point
+# the SQLite file somewhere else without touching code.
 BASE_DIR = Path(__file__).resolve().parent.parent
-DATA_DIR = BASE_DIR / "data"
-DATA_DIR.mkdir(exist_ok=True)
+DATA_DIR = Path(os.getenv("PITCHPACE_DATA_DIR", str(BASE_DIR / "data")))
+DATA_DIR.mkdir(parents=True, exist_ok=True)
 DB_PATH = DATA_DIR / "pitchpace.db"
 
 

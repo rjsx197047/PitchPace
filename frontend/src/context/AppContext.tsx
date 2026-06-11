@@ -92,7 +92,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setStats(s);
       setProfile(p);
     } catch (e) {
-      pushError(e instanceof Error ? e.message : 'Failed to load data');
+      // A TypeError means the network is down — the offline outbox + service
+      // worker handle that path; an error toast would just be noise.
+      if (!(e instanceof TypeError)) {
+        pushError(e instanceof Error ? e.message : 'Failed to load data');
+      }
     } finally {
       setLoading(false);
     }
@@ -103,6 +107,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
     api.getHealth().then(setHealth).catch(() => setHealth(null));
     refresh();
   }, [refresh]);
+
+  // Offline outbox lifecycle: flush queued workouts when the connection comes
+  // back (and once at startup), and surface what happened as toasts.
+  useEffect(() => {
+    const tryFlush = () => {
+      api.flushOutbox().catch(() => {});
+    };
+    const onQueued = () =>
+      pushError(
+        "You're offline — session saved on this device. It will sync automatically when you're back online.",
+      );
+    const onSynced = (e: Event) => {
+      const count = (e as CustomEvent<{ count: number }>).detail?.count ?? 0;
+      pushError(`Back online — synced ${count} queued session${count === 1 ? '' : 's'}.`);
+      refresh();
+    };
+    window.addEventListener('online', tryFlush);
+    window.addEventListener('pp:workout-queued', onQueued);
+    window.addEventListener('pp:outbox-synced', onSynced);
+    tryFlush();
+    return () => {
+      window.removeEventListener('online', tryFlush);
+      window.removeEventListener('pp:workout-queued', onQueued);
+      window.removeEventListener('pp:outbox-synced', onSynced);
+    };
+  }, [pushError, refresh]);
 
   const addWorkout = useCallback(
     async (w: api.WorkoutInput) => {

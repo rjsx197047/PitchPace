@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Node / build output
+node_modules/
+frontend/dist/
+
+# Local data — the athlete's database never belongs in the repo
+backend/data/
+
+# Tooling
+.wrangler/
+.DS_Store

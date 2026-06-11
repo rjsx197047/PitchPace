@@ -89,8 +89,31 @@ def init_db() -> None:
                 content    TEXT NOT NULL,
                 created_at TEXT NOT NULL
             );
+
+            -- Full-text index over workouts so the AI coach can retrieve
+            -- relevant sessions from the athlete's entire history (RAG).
+            CREATE VIRTUAL TABLE IF NOT EXISTS workouts_fts USING fts5(
+                title, notes, type,
+                content='workouts', content_rowid='id'
+            );
+            CREATE TRIGGER IF NOT EXISTS workouts_fts_ai AFTER INSERT ON workouts BEGIN
+                INSERT INTO workouts_fts(rowid, title, notes, type)
+                VALUES (new.id, new.title, new.notes, new.type);
+            END;
+            CREATE TRIGGER IF NOT EXISTS workouts_fts_ad AFTER DELETE ON workouts BEGIN
+                INSERT INTO workouts_fts(workouts_fts, rowid, title, notes, type)
+                VALUES ('delete', old.id, old.title, old.notes, old.type);
+            END;
+            CREATE TRIGGER IF NOT EXISTS workouts_fts_au AFTER UPDATE ON workouts BEGIN
+                INSERT INTO workouts_fts(workouts_fts, rowid, title, notes, type)
+                VALUES ('delete', old.id, old.title, old.notes, old.type);
+                INSERT INTO workouts_fts(rowid, title, notes, type)
+                VALUES (new.id, new.title, new.notes, new.type);
+            END;
             """
         )
+        # Sync the index with any rows that predate it (e.g. existing DBs).
+        conn.execute("INSERT INTO workouts_fts(workouts_fts) VALUES('rebuild')")
         row = conn.execute("SELECT id FROM profile WHERE id = 1").fetchone()
         if row is None:
             conn.execute(
@@ -223,6 +246,36 @@ def delete_workout(workout_id: int) -> bool:
     with get_conn() as conn:
         cur = conn.execute("DELETE FROM workouts WHERE id = ?", (workout_id,))
         return cur.rowcount > 0
+
+
+def search_workouts(terms: list[str], limit: int = 8) -> list[dict[str, Any]]:
+    """Full-text search over title/notes/type, best matches first.
+
+    Falls back to LIKE if the FTS query can't be parsed (defensive — terms are
+    already sanitised to alphanumerics by the caller).
+    """
+    terms = [t for t in terms if t]
+    if not terms:
+        return []
+    match = " OR ".join(f'"{t}"*' for t in terms[:8])
+    with get_conn() as conn:
+        try:
+            rows = conn.execute(
+                """SELECT w.* FROM workouts_fts
+                   JOIN workouts w ON w.id = workouts_fts.rowid
+                   WHERE workouts_fts MATCH ?
+                   ORDER BY rank LIMIT ?""",
+                (match, limit),
+            ).fetchall()
+        except sqlite3.OperationalError:
+            like = f"%{terms[0]}%"
+            rows = conn.execute(
+                """SELECT * FROM workouts
+                   WHERE title LIKE ? OR notes LIKE ? OR type LIKE ?
+                   ORDER BY date DESC LIMIT ?""",
+                (like, like, like, limit),
+            ).fetchall()
+        return [_workout_from_row(r) for r in rows]
 
 
 # ── Chat history ────────────────────────────────────────────────────────────

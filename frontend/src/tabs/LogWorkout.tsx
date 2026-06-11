@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   Dumbbell,
   CheckCircle2,
   ArrowRight,
   Plus,
   History as HistoryIcon,
+  Upload,
+  Watch,
   X,
 } from 'lucide-react';
 import { useApp, type TabKey } from '@/context/AppContext';
@@ -16,7 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { workoutMeta, intensityMeta } from '@/lib/workoutMeta';
 import { todayISO, longDate, fmt } from '@/lib/utils';
-import type { WorkoutInput } from '@/api/client';
+import { parseImportFile, type WorkoutInput } from '@/api/client';
 
 const TYPES = [
   'Match',
@@ -153,7 +155,7 @@ const ACTIVITY_CONFIG: Record<string, ActivityConfig> = {
 const EMPTY_CONFIG: ActivityConfig = { fields: [] };
 
 export function LogWorkout() {
-  const { addWorkouts, setTab } = useApp();
+  const { addWorkouts, setTab, pushError } = useApp();
 
   // The activity currently being filled in.
   const [type, setType] = useState('Sprint / Track Session');
@@ -172,6 +174,11 @@ export function LogWorkout() {
   const [saving, setSaving] = useState(false);
   // When set, the form is replaced by a saved-confirmation screen.
   const [lastLogged, setLastLogged] = useState<WorkoutInput[] | null>(null);
+
+  // Wearable import: parsed drafts awaiting review (multi-workout files).
+  const [importing, setImporting] = useState(false);
+  const [importDrafts, setImportDrafts] = useState<WorkoutInput[] | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const intensityInfo = intensityMeta(intensity);
   const config = ACTIVITY_CONFIG[type] ?? EMPTY_CONFIG;
@@ -259,6 +266,59 @@ export function LogWorkout() {
     setTab(tab);
   };
 
+  // ── Wearable import ──────────────────────────────────────────────────────
+
+  // Prefill the form from a single imported draft so the user can review it.
+  const prefillFromDraft = (d: WorkoutInput) => {
+    const draftType = TYPES.includes(d.type) ? d.type : 'Cross-Training';
+    setType(draftType);
+    setDate(d.date);
+    setTitle(d.title ?? '');
+    setDuration(d.duration_min ? String(d.duration_min) : '');
+    setDistance(d.distance_mi ? String(d.distance_mi) : '');
+    setIntensity(d.intensity || 5);
+    setCalories(d.calories ? String(d.calories) : '');
+    setNotes(d.notes ?? '');
+    const cfg = ACTIVITY_CONFIG[draftType] ?? EMPTY_CONFIG;
+    const values: Record<string, string> = {};
+    for (const f of cfg.fields) {
+      const v = (d.metrics ?? {})[f.key];
+      if (v !== undefined && v !== null && v !== '') values[f.key] = String(v);
+    }
+    setMetricValues(values);
+  };
+
+  const onImportFile = async (file: File | undefined) => {
+    if (!file) return;
+    setImporting(true);
+    try {
+      const result = await parseImportFile(file);
+      if (result.workouts.length === 1) {
+        prefillFromDraft(result.workouts[0]);
+      } else {
+        setImportDrafts(result.workouts);
+      }
+    } catch (e) {
+      pushError(e instanceof Error ? e.message : 'Could not read that file');
+    } finally {
+      setImporting(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  };
+
+  const importSelected = async (selected: WorkoutInput[]) => {
+    setSaving(true);
+    try {
+      await addWorkouts(selected);
+      setImportDrafts(null);
+      setLastLogged(selected);
+    } catch {
+      /* error toast handled in context */
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // ── Saved confirmation ─────────────────────────────────────────────────
   if (lastLogged) {
     return (
@@ -270,10 +330,54 @@ export function LogWorkout() {
     );
   }
 
+  // ── Import review (multi-workout files, e.g. Apple Health) ─────────────
+  if (importDrafts) {
+    return (
+      <ImportReview
+        drafts={importDrafts}
+        saving={saving}
+        onCancel={() => setImportDrafts(null)}
+        onImport={importSelected}
+      />
+    );
+  }
+
   const addingMore = pending.length > 0;
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">
+      {/* Import from a watch or fitness app */}
+      <Card className="border-zinc-800/80">
+        <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-brand-500/25 bg-brand-500/15 text-brand-300">
+              <Watch className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-zinc-100">Import from a watch or app</p>
+              <p className="text-xs text-zinc-500">
+                Garmin .fit / .tcx · Strava .gpx · Apple Health export (.xml / .zip)
+              </p>
+            </div>
+          </div>
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".tcx,.gpx,.fit,.xml,.zip"
+            className="hidden"
+            aria-label="Import workout file"
+            onChange={(e) => onImportFile(e.target.files?.[0])}
+          />
+          <Button
+            variant="outline"
+            onClick={() => fileRef.current?.click()}
+            disabled={importing}
+          >
+            <Upload className="h-4 w-4" /> {importing ? 'Reading…' : 'Choose file'}
+          </Button>
+        </CardContent>
+      </Card>
+
       {/* Queued activities */}
       {addingMore && (
         <Card className="animate-fade-in-up border-brand-700/30 bg-brand-950/10">
@@ -559,6 +663,109 @@ function SavedConfirmation({
           >
             Back to dashboard <ArrowRight className="h-3 w-3" />
           </button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ── Import review (pick which parsed workouts to keep) ─────────────────────
+
+function ImportReview({
+  drafts,
+  saving,
+  onCancel,
+  onImport,
+}: {
+  drafts: WorkoutInput[];
+  saving: boolean;
+  onCancel: () => void;
+  onImport: (selected: WorkoutInput[]) => void;
+}) {
+  const [selected, setSelected] = useState<Set<number>>(
+    () => new Set(drafts.map((_, i) => i)),
+  );
+  const toggle = (i: number) =>
+    setSelected((s) => {
+      const next = new Set(s);
+      if (next.has(i)) next.delete(i);
+      else next.add(i);
+      return next;
+    });
+  const chosen = drafts.filter((_, i) => selected.has(i));
+
+  return (
+    <div className="mx-auto max-w-3xl">
+      <Card className="animate-fade-in-up">
+        <CardHeader className="flex-row items-center justify-between">
+          <CardTitle>
+            Found {drafts.length} workouts — choose what to import
+          </CardTitle>
+          <button
+            onClick={() =>
+              setSelected(
+                selected.size === drafts.length
+                  ? new Set()
+                  : new Set(drafts.map((_, i) => i)),
+              )
+            }
+            className="text-xs text-brand-400 hover:text-brand-300"
+          >
+            {selected.size === drafts.length ? 'Select none' : 'Select all'}
+          </button>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <div className="max-h-[26rem] space-y-2 overflow-y-auto pr-1">
+            {drafts.map((d, i) => {
+              const meta = workoutMeta(d.type);
+              const Icon = meta.icon;
+              const active = selected.has(i);
+              return (
+                <button
+                  key={i}
+                  onClick={() => toggle(i)}
+                  className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2 text-left transition-colors ${
+                    active
+                      ? 'border-brand-600/40 bg-brand-600/10'
+                      : 'border-zinc-800/60 bg-zinc-900/40 opacity-60'
+                  }`}
+                >
+                  <div
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${meta.chip}`}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm text-zinc-100">{d.title || d.type}</p>
+                    <p className="truncate text-xs text-zinc-500">
+                      {d.date} · {d.type}
+                      {d.duration_min ? ` · ${fmt(d.duration_min)}min` : ''}
+                      {d.distance_mi ? ` · ${fmt(d.distance_mi)}mi` : ''}
+                    </p>
+                  </div>
+                  <CheckCircle2
+                    className={`h-5 w-5 shrink-0 ${
+                      active ? 'text-brand-400' : 'text-zinc-700'
+                    }`}
+                  />
+                </button>
+              );
+            })}
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="ghost" onClick={onCancel}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => onImport(chosen)}
+              disabled={saving || chosen.length === 0}
+            >
+              <Upload className="h-4 w-4" />
+              {saving
+                ? 'Importing…'
+                : `Import ${chosen.length} session${chosen.length === 1 ? '' : 's'}`}
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
