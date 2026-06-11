@@ -6,9 +6,11 @@ import {
   Activity,
   ArrowRight,
   Sparkles,
+  Target,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { StatCard } from '@/components/StatCard';
+import { ReadinessCard } from '@/components/ReadinessCard';
 import { WeeklyBarChart, TypeBreakdown, AcwrGauge } from '@/components/Charts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,8 +21,15 @@ import { longDate, fmt } from '@/lib/utils';
 
 type Metric = 'minutes' | 'distance' | 'load';
 
+/** Whole days until an ISO date (negative when it's behind us). */
+function daysUntil(iso: string): number {
+  const target = new Date(iso + 'T00:00:00').getTime();
+  const today = new Date(new Date().toDateString()).getTime();
+  return Math.round((target - today) / 86_400_000);
+}
+
 export function Dashboard() {
-  const { stats, workouts, loading, setTab } = useApp();
+  const { stats, workouts, loading, setTab, profile } = useApp();
   const [metric, setMetric] = useState<Metric>('load');
 
   if (loading && !stats) return <InlineLoader label="Loading your training…" />;
@@ -29,6 +38,7 @@ export function Dashboard() {
   const tw = stats.this_week;
   const targetPct = tw.target ? Math.min(100, Math.round((tw.sessions / tw.target) * 100)) : 0;
   const recent = workouts.slice(0, 6);
+  const eventDays = profile?.target_event_date ? daysUntil(profile.target_event_date) : null;
 
   const metricUnit = metric === 'minutes' ? 'min' : metric === 'distance' ? 'mi' : 'AU';
   const loadStatusVariant =
@@ -42,6 +52,25 @@ export function Dashboard() {
 
   return (
     <div className="space-y-5">
+      {/* Target event countdown — the plan tapers toward this */}
+      {eventDays !== null && eventDays >= 0 && (
+        <div className="flex items-center justify-between rounded-xl border border-amber-600/25 bg-amber-500/5 px-4 py-2.5">
+          <div className="flex items-center gap-2.5">
+            <Target className="h-4 w-4 text-amber-400" />
+            <p className="text-sm text-zinc-200">
+              {profile?.target_event || 'Target event'}
+              <span className="ml-2 text-xs text-zinc-500">{longDate(profile!.target_event_date)}</span>
+            </p>
+          </div>
+          <p className="text-sm font-semibold tabular-nums text-amber-300">
+            {eventDays === 0 ? 'Today!' : `${eventDays} day${eventDays === 1 ? '' : 's'} out`}
+          </p>
+        </div>
+      )}
+
+      {/* Morning readiness */}
+      <ReadinessCard />
+
       {/* Stat row */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard

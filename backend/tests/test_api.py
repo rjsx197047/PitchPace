@@ -90,3 +90,17 @@ def test_import_rejects_unknown_format():
         files={"file": ("notes.txt", b"just some text", "text/plain")},
     )
     assert resp.status_code == 400
+
+
+def test_profile_target_event_roundtrip():
+    updated = client.put(
+        "/api/profile",
+        json={"target_event": "Regional final", "target_event_date": "2026-08-01"},
+    ).json()
+    assert updated["target_event"] == "Regional final"
+    assert updated["target_event_date"] == "2026-08-01"
+
+
+def test_benchmark_type_available():
+    types = client.get("/api/workout-types").json()["types"]
+    assert "Testing / Benchmarks" in types

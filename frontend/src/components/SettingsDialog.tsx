@@ -156,6 +156,27 @@ export function SettingsDialog({
               />
             </Field>
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Target event (optional)">
+              <Input
+                value={form.target_event ?? ''}
+                onChange={(e) => set('target_event', e.target.value)}
+                placeholder="e.g. Regional final"
+              />
+            </Field>
+            <Field label="Event date">
+              <Input
+                type="date"
+                aria-label="Target event date"
+                value={form.target_event_date ?? ''}
+                onChange={(e) => set('target_event_date', e.target.value)}
+              />
+            </Field>
+          </div>
+          <p className="-mt-2 text-[11px] leading-snug text-zinc-500">
+            With an event set, weekly plans periodise toward it — building far out,
+            sharpening close in, tapering the final 1-2 weeks.
+          </p>
           <Field label="Goals">
             <Textarea
               value={form.goals ?? ''}

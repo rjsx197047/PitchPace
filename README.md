@@ -10,9 +10,12 @@ Train like you mean it. A private, local-first training tracker for soccer and t
 ## Features
 
 - **Dashboard** — weekly load, an 8-week trend, and an acute:chronic workload ratio (ACWR) gauge to keep you out of the injury red zone.
-- **Log Workout** — matches, runs, track sessions, gym lifts, weightlifting, calisthenics, plyometrics, cross-training, boxing and recovery — each activity type with its own tailored detail fields.
+- **Morning readiness check-in** — 60 seconds on sleep, energy and soreness (plus optional HRV/resting HR, scored against your own rolling baseline) produces a transparent 0-100 readiness score. The coach scales the day's load to it and flags soreness areas that repeat.
+- **Log Workout** — matches, runs, track sessions, gym lifts, weightlifting, calisthenics, plyometrics, cross-training, boxing, recovery, and a dedicated **Testing / Benchmarks** type (40yd, vertical, broad jump, 5-10-5, beep test) — each activity with its own tailored detail fields.
+- **Quick-add by voice or text** — say or type "6x400m at 70s with 2 min rest, RPE 8" and the AI fills the form for review. Works with Claude or fully offline via Ollama.
 - **Import from your watch** — drop in a Garmin `.fit`/`.tcx`, Strava `.gpx`, or a full Apple Health export (`.xml`/`.zip`); PitchPace parses duration, distance, heart rate and pace, estimates RPE, and prefills the log for review.
 - **AI coach with full-history memory** — chat, weekly plans, nutrition and recovery guidance. A built-in RAG layer (SQLite FTS5) retrieves your lifetime aggregates, weekly loads, personal bests and question-relevant past sessions, so answers like "compare this month to May" actually use your data.
+- **Periodised toward your event** — set a target event and date; weekly plans build, sharpen, then taper into it, and the dashboard counts down.
 - **Installable PWA + offline logging** — add it to your phone's home screen; the dashboard and history work offline from the last sync, and sessions logged with no signal queue locally and sync when you're back online.
 - **Your data is portable** — one-click JSON / CSV export, and everything lives in a single SQLite file you can copy or delete.
 

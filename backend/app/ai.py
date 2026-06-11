@@ -10,7 +10,10 @@ httpx so we don't pull in a heavy SDK.
 
 from __future__ import annotations
 
+import json
 import logging
+import re
+from datetime import date
 from typing import Any
 
 import httpx
@@ -90,6 +93,16 @@ def build_athlete_context(
         bio.append(f"Height: {p['height_cm']} cm")
     if p.get("goals"):
         bio.append(f"Stated goals: {p['goals']}")
+    if p.get("target_event") or p.get("target_event_date"):
+        line = f"Target event: {p.get('target_event') or 'key event'}"
+        if p.get("target_event_date"):
+            line += f" on {p['target_event_date']}"
+            try:
+                days_out = (date.fromisoformat(p["target_event_date"]) - date.today()).days
+                line += f" ({days_out} days out)"
+            except ValueError:
+                pass
+        bio.append(line)
 
     tw = stats.get("this_week", {})
     load = stats.get("load", {})
@@ -248,6 +261,12 @@ def plan_prompt(focus: str | None) -> str:
         "profile, current weekly load and recent sessions above. "
         "Respect their ACWR status (don't spike load if it's already high; build "
         "if they're undertraining). "
+        "If the athlete context lists a target event, periodise this week within "
+        "that timeline: build volume when the event is far out, sharpen and add "
+        "specificity as it approaches, and taper (cut volume, keep intensity) in "
+        "the final 7-14 days. "
+        "If morning readiness data is present, scale the next days' intensity to "
+        "it and avoid loading body areas with repeated soreness. "
         "For each day give: focus, the key session (with sets/reps/distances/paces "
         "or drills), intensity (RPE target), and a one-line rationale. "
         "Include at least one recovery/mobility day and note where the hardest "
@@ -277,3 +296,82 @@ def recovery_prompt(focus: str | None) -> str:
         "load is high, and signs of overtraining to watch for. "
         "If their ACWR is in the caution/high-risk range, prioritise that advice." + extra
     )
+
+
+# ── Free-text → workout draft (voice / quick-add logging) ──────────────────
+
+PARSE_SYSTEM = (
+    "You convert a spoken or typed workout description into structured JSON. "
+    "Reply with ONLY one JSON object — no prose, no markdown fences."
+)
+
+
+def parse_text_prompt(text: str, workout_types: list[str]) -> str:
+    today = date.today().isoformat()
+    return (
+        "Convert this workout description to JSON with exactly these keys:\n"
+        f'  date: "YYYY-MM-DD" (today is {today}; resolve words like '
+        '"yesterday"; default to today)\n'
+        f"  type: one of {json.dumps(workout_types)}\n"
+        "  title: short summary string (e.g. \"6x400m @ 70s\")\n"
+        "  duration_min: number (estimate if unstated)\n"
+        "  distance_mi: number (0 if not applicable)\n"
+        "  intensity: RPE 1-10 (estimate from how hard it sounds)\n"
+        "  calories: number or null\n"
+        "  metrics: object with only relevant keys such as reps, rep_distance_m, "
+        "rest_s, sets, load_kg, avg_pace, rounds, round_min, avg_hr, "
+        "goals, assists, position\n"
+        "  notes: anything else worth keeping, else \"\"\n\n"
+        f"Description: {text}"
+    )
+
+
+def extract_workout_json(raw: str, workout_types: list[str]) -> dict[str, Any] | None:
+    """Pull the JSON object out of a model reply and coerce it into a safe
+    workout draft. Returns None when there's nothing parseable."""
+    cleaned = re.sub(r"```(?:json)?", "", raw).strip()
+    start, end = cleaned.find("{"), cleaned.rfind("}")
+    if start == -1 or end <= start:
+        return None
+    try:
+        data = json.loads(cleaned[start : end + 1])
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(data, dict):
+        return None
+
+    def _num(v: Any, default: float = 0) -> float:
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            return default
+
+    # Fuzzy type match so "run" or "distance run" both land correctly.
+    raw_type = str(data.get("type") or "").lower()
+    type_ = next(
+        (t for t in workout_types if t.lower() == raw_type),
+        next((t for t in workout_types if raw_type and raw_type in t.lower()), None),
+    ) or "Cross-Training"
+
+    day = str(data.get("date") or "")
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", day):
+        day = date.today().isoformat()
+
+    metrics = data.get("metrics") if isinstance(data.get("metrics"), dict) else {}
+    metrics = {
+        str(k): v for k, v in metrics.items()
+        if isinstance(v, (str, int, float)) and v not in ("", None)
+    }
+
+    calories = data.get("calories")
+    return {
+        "date": day,
+        "type": type_,
+        "title": str(data.get("title") or "")[:120],
+        "duration_min": round(_num(data.get("duration_min")), 1),
+        "distance_mi": round(_num(data.get("distance_mi")), 2),
+        "intensity": int(min(10, max(1, _num(data.get("intensity"), 6)))),
+        "calories": int(_num(calories)) if calories not in (None, "", 0) else None,
+        "metrics": metrics,
+        "notes": str(data.get("notes") or "")[:500],
+    }

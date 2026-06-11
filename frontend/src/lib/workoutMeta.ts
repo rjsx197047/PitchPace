@@ -13,6 +13,7 @@ import {
   HeartPulse,
   Bike,
   Activity,
+  Timer,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -36,6 +37,7 @@ const MAP: Record<string, Meta> = {
   'Recovery / Mobility': { icon: HeartPulse, text: 'text-zinc-300', chip: 'bg-zinc-500/15 text-zinc-300 border-zinc-500/25' },
   'Cross-Training': { icon: Bike, text: 'text-indigo-400', chip: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/25' },
   Boxing: { icon: Swords, text: 'text-rose-400', chip: 'bg-rose-500/15 text-rose-300 border-rose-500/25' },
+  'Testing / Benchmarks': { icon: Timer, text: 'text-yellow-400', chip: 'bg-yellow-500/15 text-yellow-300 border-yellow-500/25' },
 };
 
 const FALLBACK: Meta = {

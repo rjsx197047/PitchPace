@@ -28,3 +28,4 @@ def fresh_db():
     with db.get_conn() as conn:
         conn.execute("DELETE FROM workouts")
         conn.execute("DELETE FROM chat_messages")
+        conn.execute("DELETE FROM checkins")

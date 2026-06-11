@@ -39,6 +39,7 @@ const ALL_TYPES = [
   'Recovery / Mobility',
   'Cross-Training',
   'Boxing',
+  'Testing / Benchmarks',
 ];
 
 export function HistoryTab() {

@@ -3,8 +3,10 @@ import {
   Dumbbell,
   CheckCircle2,
   ArrowRight,
+  Mic,
   Plus,
   History as HistoryIcon,
+  Sparkles,
   Upload,
   Watch,
   X,
@@ -18,7 +20,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { workoutMeta, intensityMeta } from '@/lib/workoutMeta';
 import { todayISO, longDate, fmt } from '@/lib/utils';
-import { parseImportFile, type WorkoutInput } from '@/api/client';
+import { parseImportFile, parseWorkoutText, type WorkoutInput } from '@/api/client';
+
+// Web Speech API (Chrome/Safari prefix it) — quick-add falls back to typing
+// when the browser doesn't support dictation.
+const SpeechRec: (new () => any) | undefined =
+  (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
 const TYPES = [
   'Match',
@@ -34,6 +41,7 @@ const TYPES = [
   'Recovery / Mobility',
   'Cross-Training',
   'Boxing',
+  'Testing / Benchmarks',
 ];
 
 // Each activity type logs its own tailored set of detail fields. The core
@@ -150,6 +158,15 @@ const ACTIVITY_CONFIG: Record<string, ActivityConfig> = {
       { key: 'punches', label: 'Punches thrown', placeholder: '400' },
     ],
   },
+  'Testing / Benchmarks': {
+    fields: [
+      { key: 'forty_yd_s', label: '40yd dash (s)', placeholder: '4.90' },
+      { key: 'vertical_cm', label: 'Vertical jump (cm)', placeholder: '55' },
+      { key: 'broad_jump_cm', label: 'Broad jump (cm)', placeholder: '240' },
+      { key: 'shuttle_5_10_5_s', label: '5-10-5 shuttle (s)', placeholder: '4.6' },
+      { key: 'beep_level', label: 'Beep test level', placeholder: '11.4' },
+    ],
+  },
 };
 
 const EMPTY_CONFIG: ActivityConfig = { fields: [] };
@@ -179,6 +196,12 @@ export function LogWorkout() {
   const [importing, setImporting] = useState(false);
   const [importDrafts, setImportDrafts] = useState<WorkoutInput[] | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Quick-add: a typed or dictated sentence the AI turns into a draft.
+  const [quickText, setQuickText] = useState('');
+  const [parsing, setParsing] = useState(false);
+  const [listening, setListening] = useState(false);
+  const recRef = useRef<any>(null);
 
   const intensityInfo = intensityMeta(intensity);
   const config = ACTIVITY_CONFIG[type] ?? EMPTY_CONFIG;
@@ -319,6 +342,44 @@ export function LogWorkout() {
     }
   };
 
+  // ── Quick-add (voice / free text) ───────────────────────────────────────
+
+  const parseQuick = async () => {
+    const text = quickText.trim();
+    if (!text || parsing) return;
+    setParsing(true);
+    try {
+      const result = await parseWorkoutText(text);
+      prefillFromDraft(result.workout);
+      setQuickText('');
+    } catch (e) {
+      pushError(e instanceof Error ? e.message : 'Could not parse that description');
+    } finally {
+      setParsing(false);
+    }
+  };
+
+  const toggleDictation = () => {
+    if (!SpeechRec) return;
+    if (listening) {
+      recRef.current?.stop();
+      return;
+    }
+    const rec = new SpeechRec();
+    rec.lang = navigator.language || 'en-US';
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+    rec.onresult = (e: any) => setQuickText(e.results[0][0].transcript);
+    rec.onend = () => setListening(false);
+    rec.onerror = () => {
+      setListening(false);
+      pushError('Dictation failed — check microphone permission, or just type it.');
+    };
+    recRef.current = rec;
+    setListening(true);
+    rec.start();
+  };
+
   // ── Saved confirmation ─────────────────────────────────────────────────
   if (lastLogged) {
     return (
@@ -346,35 +407,72 @@ export function LogWorkout() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">
-      {/* Import from a watch or fitness app */}
+      {/* Import from a watch / quick-add by voice or text */}
       <Card className="border-zinc-800/80">
-        <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-brand-500/25 bg-brand-500/15 text-brand-300">
-              <Watch className="h-5 w-5" />
+        <CardContent className="space-y-3 py-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-brand-500/25 bg-brand-500/15 text-brand-300">
+                <Watch className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-zinc-100">Import from a watch or app</p>
+                <p className="text-xs text-zinc-500">
+                  Garmin .fit / .tcx · Strava .gpx · Apple Health export (.xml / .zip)
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-medium text-zinc-100">Import from a watch or app</p>
-              <p className="text-xs text-zinc-500">
-                Garmin .fit / .tcx · Strava .gpx · Apple Health export (.xml / .zip)
-              </p>
-            </div>
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".tcx,.gpx,.fit,.xml,.zip"
+              className="hidden"
+              aria-label="Import workout file"
+              onChange={(e) => onImportFile(e.target.files?.[0])}
+            />
+            <Button
+              variant="outline"
+              onClick={() => fileRef.current?.click()}
+              disabled={importing}
+            >
+              <Upload className="h-4 w-4" /> {importing ? 'Reading…' : 'Choose file'}
+            </Button>
           </div>
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".tcx,.gpx,.fit,.xml,.zip"
-            className="hidden"
-            aria-label="Import workout file"
-            onChange={(e) => onImportFile(e.target.files?.[0])}
-          />
-          <Button
-            variant="outline"
-            onClick={() => fileRef.current?.click()}
-            disabled={importing}
-          >
-            <Upload className="h-4 w-4" /> {importing ? 'Reading…' : 'Choose file'}
-          </Button>
+
+          {/* Quick-add: describe it, the AI fills the form for review */}
+          <div className="flex items-center gap-2 border-t border-zinc-800/60 pt-3">
+            <Sparkles className="h-4 w-4 shrink-0 text-brand-400" />
+            <Input
+              value={quickText}
+              onChange={(e) => setQuickText(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && parseQuick()}
+              placeholder={
+                listening
+                  ? 'Listening…'
+                  : 'Quick add: "6x400m at 70s with 2 min rest, RPE 8"'
+              }
+              aria-label="Describe a workout in words"
+            />
+            {SpeechRec && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={toggleDictation}
+                title={listening ? 'Stop dictation' : 'Dictate workout'}
+                aria-label={listening ? 'Stop dictation' : 'Dictate workout'}
+                className={listening ? 'animate-pulse border-red-500/40 text-red-400' : ''}
+              >
+                <Mic className="h-4 w-4" />
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              onClick={parseQuick}
+              disabled={parsing || !quickText.trim()}
+            >
+              {parsing ? 'Parsing…' : 'Fill form'}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 

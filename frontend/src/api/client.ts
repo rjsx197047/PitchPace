@@ -64,6 +64,9 @@ export interface Profile {
   experience: Experience;
   weekly_target: number;
   goals: string;
+  /** Periodisation target — plans taper toward this. */
+  target_event: string;
+  target_event_date: string; // YYYY-MM-DD or ''
 }
 
 export interface Workout {
@@ -226,6 +229,43 @@ export const deleteWorkout = (id: number) =>
   req<{ deleted: number }>(`/api/workouts/${id}`, { method: 'DELETE' });
 
 export const getStats = () => req<Stats>('/api/stats');
+
+// ── Readiness check-ins ─────────────────────────────────────────────────
+
+export interface ReadinessScore {
+  score: number;
+  status: 'primed' | 'ready' | 'caution' | 'rest-day';
+  components: Record<string, number>;
+}
+
+export interface Checkin {
+  date: string;
+  sleep_h: number;
+  sleep_quality: number; // 1-5
+  energy: number; // 1-5
+  soreness: number; // 1-5 (5 = very sore)
+  sore_areas: string[];
+  resting_hr: number | null;
+  hrv_ms: number | null;
+  notes: string;
+  created_at?: string;
+  readiness?: ReadinessScore;
+}
+
+export type CheckinInput = Partial<Omit<Checkin, 'created_at' | 'readiness'>>;
+
+export const getTodayCheckin = () =>
+  req<{ checkin: Checkin | null }>('/api/checkin/today').then((r) => r.checkin);
+
+export const saveCheckin = (c: CheckinInput) => postJson<Checkin>('/api/checkin', c);
+
+// ── Quick-add: free text / voice → workout draft ────────────────────────
+
+export const parseWorkoutText = (text: string) =>
+  postJson<{ workout: WorkoutInput; backend: string }>('/api/workouts/parse-text', {
+    text,
+    api_key: getApiKey() ?? undefined,
+  });
 
 // ── Import (wearables / fitness apps) ───────────────────────────────────
 

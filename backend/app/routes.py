@@ -5,15 +5,18 @@ from __future__ import annotations
 import csv
 import io
 import json
+from datetime import date
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.responses import Response
 
-from app import ai, db, importers, rag
+from app import ai, db, importers, rag, readiness
 from app.models import (
     WORKOUT_TYPES,
     ChatRequest,
+    CheckinUpsert,
     CoachRequest,
+    ParseTextRequest,
     ProfileUpdate,
     WorkoutCreate,
     WorkoutUpdate,
@@ -94,6 +97,66 @@ async def get_stats():
     return compute_stats(workouts, weekly_target=profile.get("weekly_target", 5))
 
 
+# ── Readiness check-ins ─────────────────────────────────────────────────────
+
+
+@router.get("/checkins")
+async def get_checkins(limit: int = 30):
+    return {"checkins": readiness.with_readiness(db.list_checkins(limit=limit))}
+
+
+@router.get("/checkin/today")
+async def get_checkin_today():
+    today = date.today().isoformat()
+    checkin = db.get_checkin(today)
+    if checkin is None:
+        return {"checkin": None}
+    all_recent = db.list_checkins(limit=30)
+    hrv_base, rhr_base = readiness.baselines(all_recent, exclude_date=today)
+    return {
+        "checkin": {
+            **checkin,
+            "readiness": readiness.readiness(checkin, hrv_base, rhr_base),
+        }
+    }
+
+
+@router.post("/checkin")
+async def post_checkin(payload: CheckinUpsert):
+    data = payload.model_dump()
+    data["date"] = data.get("date") or date.today().isoformat()
+    saved = db.upsert_checkin(data)
+    all_recent = db.list_checkins(limit=30)
+    hrv_base, rhr_base = readiness.baselines(all_recent, exclude_date=saved["date"])
+    return {**saved, "readiness": readiness.readiness(saved, hrv_base, rhr_base)}
+
+
+# ── Quick-add: free text / voice → workout draft ────────────────────────────
+
+
+@router.post("/workouts/parse-text")
+async def parse_workout_text(payload: ParseTextRequest):
+    text = payload.text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Description is empty")
+    messages = [{"role": "user", "content": ai.parse_text_prompt(text, WORKOUT_TYPES)}]
+    result = await ai.generate(messages, ai.PARSE_SYSTEM, payload.api_key, max_tokens=600)
+    if result["backend"] == "none":
+        raise HTTPException(
+            status_code=503,
+            detail="Quick-add needs AI: add a Claude key in Settings or start "
+            "local Ollama.",
+        )
+    draft = ai.extract_workout_json(result["text"], WORKOUT_TYPES)
+    if draft is None:
+        raise HTTPException(
+            status_code=422,
+            detail="Couldn't understand that — try including the activity and "
+            "duration, e.g. \"45 min tempo run, 5 miles, felt hard\".",
+        )
+    return {"workout": draft, "backend": result["backend"]}
+
+
 # ── Import (wearables / fitness apps) ───────────────────────────────────────
 
 
@@ -151,14 +214,15 @@ async def export_csv():
 
 
 def _athlete_context(question: str | None = None) -> str:
-    """Profile + current state, plus a RAG digest of the athlete's entire
-    history (and question-relevant retrieved sessions when one is given)."""
+    """Profile + current state, plus the morning-readiness trail and a RAG
+    digest of the athlete's entire history (question-aware when one is given)."""
     profile = db.get_profile()
     workouts = db.list_workouts()
     stats = compute_stats(workouts, weekly_target=profile.get("weekly_target", 5))
     base = ai.build_athlete_context(profile, stats, workouts)
+    morning = readiness.build_readiness_context(db.list_checkins(limit=30))
     history = rag.build_history_context(question, workouts, search=db.search_workouts)
-    return base + "\n\n" + history
+    return base + "\n\n" + morning + "\n\n" + history
 
 
 @router.get("/chat")

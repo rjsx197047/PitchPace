@@ -47,7 +47,16 @@ DEFAULT_PROFILE = {
     "experience": "intermediate",  # beginner | intermediate | advanced
     "weekly_target": 5,
     "goals": "",
+    "target_event": "",  # e.g. "Regional final"
+    "target_event_date": "",  # YYYY-MM-DD — plans taper toward this
 }
+
+# Columns added after the original schema shipped; applied idempotently so
+# existing databases upgrade in place on startup.
+_PROFILE_MIGRATIONS = [
+    ("target_event", "TEXT NOT NULL DEFAULT ''"),
+    ("target_event_date", "TEXT NOT NULL DEFAULT ''"),
+]
 
 
 def init_db() -> None:
@@ -90,6 +99,20 @@ def init_db() -> None:
                 created_at TEXT NOT NULL
             );
 
+            -- Morning readiness check-ins: one row per day.
+            CREATE TABLE IF NOT EXISTS checkins (
+                date          TEXT PRIMARY KEY,            -- YYYY-MM-DD
+                sleep_h       REAL    NOT NULL DEFAULT 0,
+                sleep_quality INTEGER NOT NULL DEFAULT 3,  -- 1-5
+                energy        INTEGER NOT NULL DEFAULT 3,  -- 1-5
+                soreness      INTEGER NOT NULL DEFAULT 1,  -- 1-5 (5 = very sore)
+                sore_areas    TEXT    NOT NULL DEFAULT '[]', -- JSON list
+                resting_hr    INTEGER,
+                hrv_ms        REAL,
+                notes         TEXT    NOT NULL DEFAULT '',
+                created_at    TEXT    NOT NULL
+            );
+
             -- Full-text index over workouts so the AI coach can retrieve
             -- relevant sessions from the athlete's entire history (RAG).
             CREATE VIRTUAL TABLE IF NOT EXISTS workouts_fts USING fts5(
@@ -114,6 +137,12 @@ def init_db() -> None:
         )
         # Sync the index with any rows that predate it (e.g. existing DBs).
         conn.execute("INSERT INTO workouts_fts(workouts_fts) VALUES('rebuild')")
+        # In-place column migrations for databases created before these fields.
+        for col, ddl in _PROFILE_MIGRATIONS:
+            try:
+                conn.execute(f"ALTER TABLE profile ADD COLUMN {col} {ddl}")
+            except sqlite3.OperationalError:
+                pass  # column already exists
         row = conn.execute("SELECT id FROM profile WHERE id = 1").fetchone()
         if row is None:
             conn.execute(
@@ -156,6 +185,8 @@ def update_profile(data: dict[str, Any]) -> dict[str, Any]:
         "experience",
         "weekly_target",
         "goals",
+        "target_event",
+        "target_event_date",
     ]
     updates = {k: data[k] for k in fields if k in data and data[k] is not None}
     if updates:
@@ -276,6 +307,67 @@ def search_workouts(terms: list[str], limit: int = 8) -> list[dict[str, Any]]:
                 (like, like, like, limit),
             ).fetchall()
         return [_workout_from_row(r) for r in rows]
+
+
+# ── Readiness check-ins ─────────────────────────────────────────────────────
+
+
+def _checkin_from_row(row: sqlite3.Row) -> dict[str, Any]:
+    d = dict(row)
+    try:
+        d["sore_areas"] = json.loads(d.get("sore_areas") or "[]")
+    except (json.JSONDecodeError, TypeError):
+        d["sore_areas"] = []
+    return d
+
+
+def upsert_checkin(data: dict[str, Any]) -> dict[str, Any]:
+    """One check-in per day — posting the same date again replaces it."""
+    day = data["date"]
+    with get_conn() as conn:
+        conn.execute(
+            """INSERT INTO checkins
+               (date, sleep_h, sleep_quality, energy, soreness, sore_areas,
+                resting_hr, hrv_ms, notes, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(date) DO UPDATE SET
+                 sleep_h = excluded.sleep_h,
+                 sleep_quality = excluded.sleep_quality,
+                 energy = excluded.energy,
+                 soreness = excluded.soreness,
+                 sore_areas = excluded.sore_areas,
+                 resting_hr = excluded.resting_hr,
+                 hrv_ms = excluded.hrv_ms,
+                 notes = excluded.notes""",
+            (
+                day,
+                float(data.get("sleep_h") or 0),
+                int(data.get("sleep_quality") or 3),
+                int(data.get("energy") or 3),
+                int(data.get("soreness") or 1),
+                json.dumps(data.get("sore_areas") or []),
+                data.get("resting_hr"),
+                data.get("hrv_ms"),
+                data.get("notes", ""),
+                _now(),
+            ),
+        )
+        row = conn.execute("SELECT * FROM checkins WHERE date = ?", (day,)).fetchone()
+        return _checkin_from_row(row)
+
+
+def list_checkins(limit: int = 30) -> list[dict[str, Any]]:
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT * FROM checkins ORDER BY date DESC LIMIT ?", (limit,)
+        ).fetchall()
+        return [_checkin_from_row(r) for r in rows]
+
+
+def get_checkin(day: str) -> dict[str, Any] | None:
+    with get_conn() as conn:
+        row = conn.execute("SELECT * FROM checkins WHERE date = ?", (day,)).fetchone()
+        return _checkin_from_row(row) if row else None
 
 
 # ── Chat history ────────────────────────────────────────────────────────────
