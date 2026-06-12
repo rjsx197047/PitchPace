@@ -99,6 +99,19 @@ def init_db() -> None:
                 created_at TEXT NOT NULL
             );
 
+            -- Match-film tagging sessions. The video itself never leaves the
+            -- athlete's device — only its filename and the timestamped tags.
+            CREATE TABLE IF NOT EXISTS film_sessions (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                date       TEXT    NOT NULL,
+                title      TEXT    NOT NULL DEFAULT '',
+                video_name TEXT    NOT NULL DEFAULT '',
+                workout_id INTEGER,            -- optional link to a logged Match
+                tags       TEXT    NOT NULL DEFAULT '[]', -- JSON [{t, label, note}]
+                notes      TEXT    NOT NULL DEFAULT '',
+                created_at TEXT    NOT NULL
+            );
+
             -- Morning readiness check-ins: one row per day.
             CREATE TABLE IF NOT EXISTS checkins (
                 date          TEXT PRIMARY KEY,            -- YYYY-MM-DD
@@ -307,6 +320,73 @@ def search_workouts(terms: list[str], limit: int = 8) -> list[dict[str, Any]]:
                 (like, like, like, limit),
             ).fetchall()
         return [_workout_from_row(r) for r in rows]
+
+
+# ── Film sessions ───────────────────────────────────────────────────────────
+
+
+def _film_from_row(row: sqlite3.Row) -> dict[str, Any]:
+    d = dict(row)
+    try:
+        d["tags"] = json.loads(d.get("tags") or "[]")
+    except (json.JSONDecodeError, TypeError):
+        d["tags"] = []
+    return d
+
+
+def create_film_session(data: dict[str, Any]) -> dict[str, Any]:
+    with get_conn() as conn:
+        cur = conn.execute(
+            """INSERT INTO film_sessions
+               (date, title, video_name, workout_id, tags, notes, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (
+                data["date"],
+                data.get("title", ""),
+                data.get("video_name", ""),
+                data.get("workout_id"),
+                json.dumps(data.get("tags") or []),
+                data.get("notes", ""),
+                _now(),
+            ),
+        )
+        row = conn.execute(
+            "SELECT * FROM film_sessions WHERE id = ?", (cur.lastrowid,)
+        ).fetchone()
+        return _film_from_row(row)
+
+
+def list_film_sessions(limit: int = 50) -> list[dict[str, Any]]:
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT * FROM film_sessions ORDER BY date DESC, id DESC LIMIT ?",
+            (limit,),
+        ).fetchall()
+        return [_film_from_row(r) for r in rows]
+
+
+def update_film_session(film_id: int, data: dict[str, Any]) -> dict[str, Any] | None:
+    allowed = ["date", "title", "video_name", "workout_id", "notes"]
+    updates = {k: data[k] for k in allowed if k in data}
+    with get_conn() as conn:
+        if "tags" in data:
+            updates["tags"] = json.dumps(data["tags"] or [])
+        if updates:
+            sets = ", ".join(f"{k} = ?" for k in updates)
+            conn.execute(
+                f"UPDATE film_sessions SET {sets} WHERE id = ?",
+                (*updates.values(), film_id),
+            )
+        row = conn.execute(
+            "SELECT * FROM film_sessions WHERE id = ?", (film_id,)
+        ).fetchone()
+        return _film_from_row(row) if row else None
+
+
+def delete_film_session(film_id: int) -> bool:
+    with get_conn() as conn:
+        cur = conn.execute("DELETE FROM film_sessions WHERE id = ?", (film_id,))
+        return cur.rowcount > 0
 
 
 # ── Readiness check-ins ─────────────────────────────────────────────────────

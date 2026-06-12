@@ -14,6 +14,7 @@ export type TabKey =
   | 'dashboard'
   | 'log'
   | 'history'
+  | 'film'
   | 'plan'
   | 'coach'
   | 'nutrition';

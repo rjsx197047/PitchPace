@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { KeyRound, User2, Check } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Check, Download, KeyRound, RefreshCw, Upload, User2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -29,19 +29,60 @@ export function SettingsDialog({
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }) {
-  const { profile, saveProfile, health, refreshApiKeyState, pushError } = useApp();
+  const { profile, saveProfile, health, refresh, refreshApiKeyState, pushError } = useApp();
   const [form, setForm] = useState<Partial<api.Profile>>({});
   const [keyInput, setKeyInput] = useState('');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  // Encrypted device sync.
+  const [syncPass, setSyncPass] = useState('');
+  const [syncBusy, setSyncBusy] = useState(false);
+  const [syncMsg, setSyncMsg] = useState('');
+  const syncFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open && profile) {
       setForm(profile);
       setKeyInput(api.getApiKey() ?? '');
       setSaved(false);
+      setSyncMsg('');
     }
   }, [open, profile]);
+
+  const syncReady = syncPass.length >= 8;
+
+  const doSyncExport = async () => {
+    setSyncBusy(true);
+    setSyncMsg('');
+    try {
+      await api.syncExport(syncPass);
+      setSyncMsg('Encrypted sync file downloaded — move it to your other device and import it there.');
+    } catch (e) {
+      setSyncMsg(e instanceof Error ? e.message : 'Export failed');
+    } finally {
+      setSyncBusy(false);
+    }
+  };
+
+  const doSyncImport = async (file: File | undefined) => {
+    if (!file) return;
+    setSyncBusy(true);
+    setSyncMsg('');
+    try {
+      const r = await api.syncImport(file, syncPass);
+      setSyncMsg(
+        `Merged: +${r.workouts_added} workouts, +${r.checkins_added} check-ins, ` +
+          `+${r.film_added} film sessions (${r.skipped} already here).`,
+      );
+      await refresh();
+    } catch (e) {
+      setSyncMsg(e instanceof Error ? e.message : 'Import failed');
+    } finally {
+      setSyncBusy(false);
+      if (syncFileRef.current) syncFileRef.current.value = '';
+    }
+  };
 
   const set = <K extends keyof api.Profile>(k: K, v: api.Profile[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
@@ -207,6 +248,59 @@ export function SettingsDialog({
             <p className="mt-1.5 text-[11px] leading-snug text-zinc-500">
               Add a key for the highest-quality coaching. Without one, PitchPace
               uses your local Ollama model. Stored only in this browser.
+            </p>
+          </div>
+
+          {/* Encrypted device sync */}
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="flex items-center gap-2 text-sm font-medium text-zinc-200">
+                <RefreshCw className="h-4 w-4 text-brand-400" /> Sync between devices
+              </span>
+              <Badge variant="success">End-to-end encrypted</Badge>
+            </div>
+            <Input
+              type="password"
+              value={syncPass}
+              onChange={(e) => setSyncPass(e.target.value)}
+              placeholder="Sync passphrase (8+ characters — never stored)"
+              aria-label="Sync passphrase"
+            />
+            <div className="mt-2 flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={doSyncExport}
+                disabled={!syncReady || syncBusy}
+                className="flex-1"
+              >
+                <Download className="h-3.5 w-3.5" /> Export sync file
+              </Button>
+              <input
+                ref={syncFileRef}
+                type="file"
+                accept=".ppsync"
+                className="hidden"
+                aria-label="Import sync file"
+                onChange={(e) => doSyncImport(e.target.files?.[0])}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => syncFileRef.current?.click()}
+                disabled={!syncReady || syncBusy}
+                className="flex-1"
+              >
+                <Upload className="h-3.5 w-3.5" /> Import sync file
+              </Button>
+            </div>
+            {syncMsg && <p className="mt-2 text-[11px] leading-snug text-brand-300">{syncMsg}</p>}
+            <p className="mt-1.5 text-[11px] leading-snug text-zinc-500">
+              Your data is AES-256 encrypted with this passphrase <em>before</em> it
+              leaves the app, so the file can travel over any cloud drive, e-mail or
+              USB stick you trust. Import on the other device with the same
+              passphrase — existing entries are skipped, never overwritten. There is
+              no PitchPace server in the middle.
             </p>
           </div>
         </div>

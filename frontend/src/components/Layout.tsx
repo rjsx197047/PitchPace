@@ -4,6 +4,7 @@ import { TopBar } from '@/components/TopBar';
 import { Dashboard } from '@/tabs/Dashboard';
 import { LogWorkout } from '@/tabs/LogWorkout';
 import { HistoryTab } from '@/tabs/History';
+import { FilmRoom } from '@/tabs/FilmRoom';
 import { TrainingPlan } from '@/tabs/TrainingPlan';
 import { Coach } from '@/tabs/Coach';
 import { Nutrition } from '@/tabs/Nutrition';
@@ -20,6 +21,7 @@ export function Layout() {
             {tab === 'dashboard' && <Dashboard />}
             {tab === 'log' && <LogWorkout />}
             {tab === 'history' && <HistoryTab />}
+            {tab === 'film' && <FilmRoom />}
             {tab === 'plan' && <TrainingPlan />}
             {tab === 'coach' && <Coach />}
             {tab === 'nutrition' && <Nutrition />}

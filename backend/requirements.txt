@@ -4,3 +4,4 @@ httpx>=0.26.0
 pydantic>=2.5.0
 python-multipart>=0.0.9
 fitparse>=1.2.0
+cryptography>=42.0

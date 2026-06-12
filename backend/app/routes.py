@@ -7,17 +7,20 @@ import io
 import json
 from datetime import date
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from fastapi.responses import Response
 
-from app import ai, db, importers, rag, readiness
+from app import ai, db, importers, rag, readiness, sync
 from app.models import (
     WORKOUT_TYPES,
     ChatRequest,
     CheckinUpsert,
     CoachRequest,
+    FilmSessionCreate,
+    FilmSessionUpdate,
     ParseTextRequest,
     ProfileUpdate,
+    SyncExportRequest,
     WorkoutCreate,
     WorkoutUpdate,
 )
@@ -157,6 +160,67 @@ async def parse_workout_text(payload: ParseTextRequest):
     return {"workout": draft, "backend": result["backend"]}
 
 
+# ── Film Room (local match-video tagging) ───────────────────────────────────
+
+
+@router.get("/film")
+async def get_film_sessions(limit: int = 50):
+    return {"sessions": db.list_film_sessions(limit=limit)}
+
+
+@router.post("/film")
+async def post_film_session(payload: FilmSessionCreate):
+    data = payload.model_dump()
+    data["date"] = data.get("date") or date.today().isoformat()
+    return db.create_film_session(data)
+
+
+@router.put("/film/{film_id}")
+async def put_film_session(film_id: int, payload: FilmSessionUpdate):
+    updated = db.update_film_session(
+        film_id, payload.model_dump(exclude_none=True)
+    )
+    if updated is None:
+        raise HTTPException(status_code=404, detail="Film session not found")
+    return updated
+
+
+@router.delete("/film/{film_id}")
+async def remove_film_session(film_id: int):
+    if not db.delete_film_session(film_id):
+        raise HTTPException(status_code=404, detail="Film session not found")
+    return {"deleted": film_id}
+
+
+# ── Encrypted device sync ───────────────────────────────────────────────────
+
+
+@router.post("/sync/export")
+async def sync_export(payload: SyncExportRequest):
+    if len(payload.passphrase) < sync.MIN_PASSPHRASE_LEN:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Passphrase must be at least {sync.MIN_PASSPHRASE_LEN} characters",
+        )
+    blob = sync.encrypt_payload(sync.export_payload(), payload.passphrase)
+    filename = f"pitchpace-{date.today().isoformat()}.ppsync"
+    return Response(
+        content=blob,
+        media_type="application/octet-stream",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.post("/sync/import")
+async def sync_import(file: UploadFile = File(...), passphrase: str = Form(...)):
+    blob = await file.read()
+    try:
+        payload = sync.decrypt_payload(blob, passphrase)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return sync.merge_payload(payload)
+
+
 # ── Import (wearables / fitness apps) ───────────────────────────────────────
 
 
@@ -213,16 +277,39 @@ async def export_csv():
 # ── AI coach ────────────────────────────────────────────────────────────────
 
 
+def _film_context() -> str:
+    """Compact summary of recent match-film tags for the coach."""
+    sessions = db.list_film_sessions(limit=3)
+    if not sessions:
+        return ""
+    lines = []
+    for s in sessions:
+        tags = s.get("tags") or []
+        counts: dict[str, int] = {}
+        for t in tags:
+            counts[t.get("label", "?")] = counts.get(t.get("label", "?"), 0) + 1
+        summary = ", ".join(f"{k} x{v}" for k, v in sorted(counts.items(), key=lambda kv: -kv[1]))
+        lines.append(
+            f"- {s.get('date')} · {s.get('title') or s.get('video_name') or 'film session'}"
+            f" · {len(tags)} tags" + (f": {summary}" if summary else "")
+        )
+    return "=== MATCH FILM TAGS (latest first) ===\n" + "\n".join(lines)
+
+
 def _athlete_context(question: str | None = None) -> str:
-    """Profile + current state, plus the morning-readiness trail and a RAG
-    digest of the athlete's entire history (question-aware when one is given)."""
+    """Profile + current state, plus the morning-readiness trail, recent film
+    tags, and a RAG digest of the athlete's entire history (question-aware
+    when one is given)."""
     profile = db.get_profile()
     workouts = db.list_workouts()
     stats = compute_stats(workouts, weekly_target=profile.get("weekly_target", 5))
-    base = ai.build_athlete_context(profile, stats, workouts)
-    morning = readiness.build_readiness_context(db.list_checkins(limit=30))
-    history = rag.build_history_context(question, workouts, search=db.search_workouts)
-    return base + "\n\n" + morning + "\n\n" + history
+    parts = [
+        ai.build_athlete_context(profile, stats, workouts),
+        readiness.build_readiness_context(db.list_checkins(limit=30)),
+        _film_context(),
+        rag.build_history_context(question, workouts, search=db.search_workouts),
+    ]
+    return "\n\n".join(p for p in parts if p)
 
 
 @router.get("/chat")

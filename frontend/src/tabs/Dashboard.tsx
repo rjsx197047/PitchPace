@@ -11,6 +11,7 @@ import {
 import { useApp } from '@/context/AppContext';
 import { StatCard } from '@/components/StatCard';
 import { ReadinessCard } from '@/components/ReadinessCard';
+import { BenchmarkProgress } from '@/components/BenchmarkProgress';
 import { WeeklyBarChart, TypeBreakdown, AcwrGauge } from '@/components/Charts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -205,6 +206,9 @@ export function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Benchmark progression — renders only once testing sessions exist */}
+      <BenchmarkProgress />
 
       {/* Coach nudge */}
       <Card className="border-brand-700/30 bg-gradient-to-br from-brand-950/40 to-zinc-900/40">

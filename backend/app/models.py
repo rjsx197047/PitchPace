@@ -113,3 +113,37 @@ class CheckinUpsert(BaseModel):
 class ParseTextRequest(BaseModel):
     text: str
     api_key: Optional[str] = None
+
+
+# ── Film Room ───────────────────────────────────────────────────────────────
+
+
+class FilmTag(BaseModel):
+    t: float = Field(ge=0)  # seconds into the video
+    label: str
+    note: str = ""
+
+
+class FilmSessionCreate(BaseModel):
+    date: Optional[str] = None  # defaults to today
+    title: str = ""
+    video_name: str = ""
+    workout_id: Optional[int] = None
+    tags: list[FilmTag] = Field(default_factory=list)
+    notes: str = ""
+
+
+class FilmSessionUpdate(BaseModel):
+    date: Optional[str] = None
+    title: Optional[str] = None
+    video_name: Optional[str] = None
+    workout_id: Optional[int] = None
+    tags: Optional[list[FilmTag]] = None
+    notes: Optional[str] = None
+
+
+# ── Encrypted sync ──────────────────────────────────────────────────────────
+
+
+class SyncExportRequest(BaseModel):
+    passphrase: str

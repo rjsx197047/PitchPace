@@ -2,6 +2,7 @@ import {
   LayoutDashboard,
   PlusCircle,
   History,
+  Clapperboard,
   CalendarRange,
   MessageSquareText,
   Salad,
@@ -34,6 +35,12 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'History',
     icon: History,
     description: 'Browse, edit and review every session',
+  },
+  {
+    key: 'film',
+    label: 'Film Room',
+    icon: Clapperboard,
+    description: 'Tag match film — the video never leaves your device',
   },
   {
     key: 'plan',

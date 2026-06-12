@@ -267,6 +267,86 @@ export const parseWorkoutText = (text: string) =>
     api_key: getApiKey() ?? undefined,
   });
 
+// ── Film Room (local match-video tagging) ───────────────────────────────
+
+export interface FilmTag {
+  t: number; // seconds into the video
+  label: string;
+  note?: string;
+}
+
+export interface FilmSession {
+  id: number;
+  date: string;
+  title: string;
+  video_name: string;
+  workout_id: number | null;
+  tags: FilmTag[];
+  notes: string;
+  created_at: string;
+}
+
+export type FilmSessionInput = Partial<Omit<FilmSession, 'id' | 'created_at'>>;
+
+export const getFilmSessions = () =>
+  req<{ sessions: FilmSession[] }>('/api/film').then((r) => r.sessions);
+
+export const createFilmSession = (s: FilmSessionInput) =>
+  postJson<FilmSession>('/api/film', s);
+
+export const updateFilmSession = (id: number, s: FilmSessionInput) =>
+  req<FilmSession>(`/api/film/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(s),
+  });
+
+export const deleteFilmSession = (id: number) =>
+  req<{ deleted: number }>(`/api/film/${id}`, { method: 'DELETE' });
+
+// ── Encrypted device sync ───────────────────────────────────────────────
+
+export interface SyncResult {
+  workouts_added: number;
+  checkins_added: number;
+  film_added: number;
+  skipped: number;
+}
+
+/** Download an encrypted .ppsync snapshot of everything. */
+export async function syncExport(passphrase: string): Promise<void> {
+  const res = await fetch('/api/sync/export', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ passphrase }),
+  });
+  if (!res.ok) {
+    let detail = `${res.status} ${res.statusText}`;
+    try {
+      detail = (await res.json())?.detail ?? detail;
+    } catch {
+      /* not JSON */
+    }
+    throw new Error(detail);
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `pitchpace-${new Date().toISOString().slice(0, 10)}.ppsync`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+export const syncImport = (file: File, passphrase: string): Promise<SyncResult> => {
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('passphrase', passphrase);
+  return req<SyncResult>('/api/sync/import', { method: 'POST', body: fd });
+};
+
 // ── Import (wearables / fitness apps) ───────────────────────────────────
 
 export interface ImportParseResult {
