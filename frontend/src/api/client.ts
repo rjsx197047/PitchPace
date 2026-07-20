@@ -64,6 +64,8 @@ export interface Profile {
   experience: Experience;
   weekly_target: number;
   goals: string;
+  /** Free-text self-description; the AI uses it as a baseline for coaching. */
+  self_description: string;
   /** Periodisation target — plans taper toward this. */
   target_event: string;
   target_event_date: string; // YYYY-MM-DD or ''

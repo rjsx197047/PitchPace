@@ -47,6 +47,7 @@ DEFAULT_PROFILE = {
     "experience": "intermediate",  # beginner | intermediate | advanced
     "weekly_target": 5,
     "goals": "",
+    "self_description": "",  # athlete's own baseline description for the AI
     "target_event": "",  # e.g. "Regional final"
     "target_event_date": "",  # YYYY-MM-DD — plans taper toward this
 }
@@ -56,6 +57,7 @@ DEFAULT_PROFILE = {
 _PROFILE_MIGRATIONS = [
     ("target_event", "TEXT NOT NULL DEFAULT ''"),
     ("target_event_date", "TEXT NOT NULL DEFAULT ''"),
+    ("self_description", "TEXT NOT NULL DEFAULT ''"),
 ]
 
 
@@ -198,6 +200,7 @@ def update_profile(data: dict[str, Any]) -> dict[str, Any]:
         "experience",
         "weekly_target",
         "goals",
+        "self_description",
         "target_event",
         "target_event_date",
     ]

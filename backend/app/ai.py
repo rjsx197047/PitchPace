@@ -91,6 +91,11 @@ def build_athlete_context(
         bio.append(f"Weight: {p['weight_kg']} kg")
     if p.get("height_cm"):
         bio.append(f"Height: {p['height_cm']} cm")
+    if p.get("self_description"):
+        bio.append(
+            "Athlete's own description (baseline — weigh this heavily, "
+            f"especially when little has been logged yet): {p['self_description']}"
+        )
     if p.get("goals"):
         bio.append(f"Stated goals: {p['goals']}")
     if p.get("target_event") or p.get("target_event_date"):

@@ -197,6 +197,28 @@ export function SettingsDialog({
               />
             </Field>
           </div>
+          {/* Self-description — a new athlete pastes their background so the
+              coach has a baseline before any sessions are logged. */}
+          <div className="rounded-xl border border-brand-700/30 bg-brand-950/20 p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="flex items-center gap-2 text-sm font-medium text-zinc-200">
+                <User2 className="h-4 w-4 text-brand-400" /> About you — tell the coach who you are
+              </span>
+              <Badge variant="success">Great for day one</Badge>
+            </div>
+            <Textarea
+              value={form.self_description ?? ''}
+              onChange={(e) => set('self_description', e.target.value)}
+              placeholder="Paste anything: your background and level, position(s), personal bests, injury history, strengths and weaknesses, what a normal training week looks like, and where you want to get to."
+              rows={5}
+            />
+            <p className="mt-1.5 text-[11px] leading-snug text-zinc-500">
+              New here? This is the fastest way to get useful coaching immediately —
+              the AI treats it as your <em>baseline benchmark</em> and leans on it until
+              your logged sessions can speak for themselves.
+            </p>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <Field label="Target event (optional)">
               <Input

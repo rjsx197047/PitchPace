@@ -104,3 +104,16 @@ def test_profile_target_event_roundtrip():
 def test_benchmark_type_available():
     types = client.get("/api/workout-types").json()["types"]
     assert "Testing / Benchmarks" in types
+
+
+def test_profile_self_description_roundtrip_and_feeds_ai():
+    from app import ai, db
+
+    bio = "Semi-pro winger, 8 yrs, 800m PB 1:56, recurring left hamstring strain."
+    updated = client.put("/api/profile", json={"self_description": bio}).json()
+    assert updated["self_description"] == bio
+
+    # The self-description must reach the AI's athlete context verbatim.
+    ctx = ai.build_athlete_context(db.get_profile(), {}, [])
+    assert bio in ctx
+    assert "baseline" in ctx.lower()

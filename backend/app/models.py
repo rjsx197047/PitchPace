@@ -38,6 +38,9 @@ class ProfileUpdate(BaseModel):
     experience: Optional[Literal["beginner", "intermediate", "advanced"]] = None
     weekly_target: Optional[int] = None
     goals: Optional[str] = None
+    # Free-text self-description a new athlete can paste in; the AI treats it
+    # as baseline context until enough sessions are logged to speak for itself.
+    self_description: Optional[str] = None
     # Periodisation target: the plan builder tapers toward this.
     target_event: Optional[str] = None
     target_event_date: Optional[str] = None  # YYYY-MM-DD, "" clears it
