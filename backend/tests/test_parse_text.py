@@ -58,6 +58,30 @@ def test_parse_text_empty_input():
     assert resp.status_code == 400
 
 
+def test_evaluate_endpoint(monkeypatch):
+    monkeypatch.setattr(
+        ai, "generate", _fake_generate("## Session summary\nSolid push day.")
+    )
+    resp = client.post(
+        "/api/workouts/evaluate",
+        json={"text": "chest press 110x7 x4 then 90x10; incline 60x10 x3"},
+    )
+    assert resp.status_code == 200, resp.text
+    assert "Session summary" in resp.json()["evaluation"]
+    assert resp.json()["backend"] == "claude"
+
+
+def test_evaluate_no_ai_backend(monkeypatch):
+    monkeypatch.setattr(ai, "generate", _fake_generate("x", backend="none"))
+    resp = client.post("/api/workouts/evaluate", json={"text": "bench 3x5"})
+    assert resp.status_code == 503
+
+
+def test_evaluate_empty_input():
+    resp = client.post("/api/workouts/evaluate", json={"text": "   "})
+    assert resp.status_code == 400
+
+
 def test_extract_workout_json_coercion():
     raw = json.dumps(
         {

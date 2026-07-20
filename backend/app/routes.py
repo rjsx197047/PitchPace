@@ -160,6 +160,25 @@ async def parse_workout_text(payload: ParseTextRequest):
     return {"workout": draft, "backend": result["backend"]}
 
 
+@router.post("/workouts/evaluate")
+async def evaluate_workout(payload: ParseTextRequest):
+    """Coach evaluation of a full session pasted as free text (e.g. a lifting
+    day). Uses the athlete's profile, history and readiness as context."""
+    text = payload.text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Paste your session first.")
+    system = COACH_SYSTEM_WITH_CONTEXT()
+    messages = [{"role": "user", "content": ai.evaluate_session_prompt(text)}]
+    result = await ai.generate(messages, system, payload.api_key, max_tokens=1400)
+    if result["backend"] == "none":
+        raise HTTPException(
+            status_code=503,
+            detail="AI evaluation needs a Claude key in Settings or a local "
+            "Ollama server.",
+        )
+    return {"evaluation": result["text"], "backend": result["backend"]}
+
+
 # ── Film Room (local match-video tagging) ───────────────────────────────────
 
 

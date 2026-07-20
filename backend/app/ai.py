@@ -305,6 +305,34 @@ def recovery_prompt(focus: str | None) -> str:
 
 # ── Free-text → workout draft (voice / quick-add logging) ──────────────────
 
+def evaluate_session_prompt(text: str) -> str:
+    """Coach-style evaluation of a full session the athlete pasted freeform
+    (e.g. a whole lifting day). The athlete profile, recent sessions and
+    readiness are supplied as context above this prompt."""
+    return (
+        "The athlete pasted their full training session below in free form. "
+        "Evaluate it as their strength & conditioning coach, using the athlete "
+        "profile, recent sessions and readiness in the context above.\n\n"
+        "Respond in tight markdown with these sections:\n"
+        "- **Session summary** — movement patterns / muscle groups trained, "
+        "total working sets, and rough training volume.\n"
+        "- **What worked** — sound exercise selection, progression, or the form "
+        "cues they noted.\n"
+        "- **Gaps & balance** — push/pull and muscle-group balance, rep ranges "
+        "vs their goals, anything over- or under-worked (weigh the week, not "
+        "just today).\n"
+        "- **Load & progression** — read the actual weights and reps, then give "
+        "specific next-step numbers to progress.\n"
+        "- **Watch-outs** — flag anything that fits their injury history or an "
+        "ACWR / readiness concern.\n"
+        "- **Next session** — 2-4 concrete, actionable cues.\n\n"
+        "Reference their real numbers. Note any assumption briefly when the "
+        "paste is ambiguous.\n\n"
+        "=== ATHLETE'S PASTED SESSION ===\n"
+        f"{text}"
+    )
+
+
 PARSE_SYSTEM = (
     "You convert a spoken or typed workout description into structured JSON. "
     "Reply with ONLY one JSON object — no prose, no markdown fences."

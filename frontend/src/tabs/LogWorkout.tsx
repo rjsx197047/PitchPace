@@ -18,9 +18,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { Markdown } from '@/components/Markdown';
 import { workoutMeta, intensityMeta } from '@/lib/workoutMeta';
 import { todayISO, longDate, fmt } from '@/lib/utils';
-import { parseImportFile, parseWorkoutText, type WorkoutInput } from '@/api/client';
+import {
+  parseImportFile,
+  parseWorkoutText,
+  evaluateWorkoutText,
+  type WorkoutInput,
+} from '@/api/client';
 
 // Web Speech API (Chrome/Safari prefix it) — quick-add falls back to typing
 // when the browser doesn't support dictation.
@@ -107,14 +113,9 @@ const ACTIVITY_CONFIG: Record<string, ActivityConfig> = {
       { key: 'load_kg', label: 'Load (kg)', placeholder: '80' },
     ],
   },
-  Weightlifting: {
-    fields: [
-      { key: 'main_lift', label: 'Main lift', kind: 'text', placeholder: 'Clean & jerk' },
-      { key: 'sets', label: 'Sets', placeholder: '5' },
-      { key: 'reps', label: 'Reps / set', placeholder: '3' },
-      { key: 'load_kg', label: 'Load (kg)', placeholder: '70' },
-    ],
-  },
+  // Weightlifting is a free-text "paste your whole session" flow with an AI
+  // evaluation (handled separately below) — no structured metric grid.
+  Weightlifting: { fields: [] },
   Calisthenics: {
     fields: [
       { key: 'skill', label: 'Skill / progression', kind: 'text', placeholder: 'Pull-ups' },
@@ -171,6 +172,19 @@ const ACTIVITY_CONFIG: Record<string, ActivityConfig> = {
 
 const EMPTY_CONFIG: ActivityConfig = { fields: [] };
 
+const WEIGHTLIFTING_PLACEHOLDER = `Paste everything you did — exercises, sets, reps, weights, and notes. Freeform is fine, e.g.:
+
+Push day (chest / triceps / biceps)
+- Chest press machine: 110lb x7, x4; then 90lb x10
+- Incline press machine: 60lb x10, 3 sets (hardest to finish)
+- Pec fly: 40lb, 3 sets
+- Tricep rope pushdown: 15lb x15, 3 sets (most burn)
+- Biceps curl machine: 40x10 warmup, 70x10 x2, 3rd to failure ~15 reps
+- DB preacher curls: 20lb x15, 3 sets
+
+Core: hanging leg raises 3x10, ab wheel 3x15, heel taps 3x20…
+Notes: great pump, incline press was the toughest.`;
+
 export function LogWorkout() {
   const { addWorkouts, setTab, pushError } = useApp();
 
@@ -203,6 +217,11 @@ export function LogWorkout() {
   const [listening, setListening] = useState(false);
   const recRef = useRef<any>(null);
 
+  // Weightlifting: paste the whole session, optionally have the AI coach grade it.
+  const [sessionLog, setSessionLog] = useState('');
+  const [evaluating, setEvaluating] = useState(false);
+  const [evaluation, setEvaluation] = useState<string | null>(null);
+
   const intensityInfo = intensityMeta(intensity);
   const config = ACTIVITY_CONFIG[type] ?? EMPTY_CONFIG;
   const setMetric = (key: string, v: string) =>
@@ -214,6 +233,9 @@ export function LogWorkout() {
       const raw = metricValues[f.key];
       if (raw === undefined || raw.trim() === '') continue;
       metrics[f.key] = f.kind === 'text' ? raw.trim() : Number(raw);
+    }
+    if (type === 'Weightlifting' && sessionLog.trim()) {
+      metrics.session_log = sessionLog.trim();
     }
     return {
       date,
@@ -234,6 +256,7 @@ export function LogWorkout() {
     Number(distance) > 0 ||
     title.trim() !== '' ||
     notes.trim() !== '' ||
+    (type === 'Weightlifting' && sessionLog.trim() !== '') ||
     config.fields.some((f) => (metricValues[f.key] ?? '').trim() !== '');
 
   // Reset just the activity inputs (keep the shared date for the next one).
@@ -246,6 +269,8 @@ export function LogWorkout() {
     setCalories('');
     setNotes('');
     setMetricValues({});
+    setSessionLog('');
+    setEvaluation(null);
   };
 
   const resetAll = () => {
@@ -356,6 +381,20 @@ export function LogWorkout() {
       pushError(e instanceof Error ? e.message : 'Could not parse that description');
     } finally {
       setParsing(false);
+    }
+  };
+
+  const evaluateSession = async () => {
+    const text = sessionLog.trim();
+    if (!text || evaluating) return;
+    setEvaluating(true);
+    try {
+      const result = await evaluateWorkoutText(text);
+      setEvaluation(result.evaluation);
+    } catch (e) {
+      pushError(e instanceof Error ? e.message : 'Could not evaluate the session');
+    } finally {
+      setEvaluating(false);
     }
   };
 
@@ -596,6 +635,46 @@ export function LogWorkout() {
               </Field>
             )}
           </div>
+
+          {/* Weightlifting: paste the whole session; the AI coach evaluates it. */}
+          {type === 'Weightlifting' && (
+            <div className="space-y-3 rounded-xl border border-zinc-800/70 bg-zinc-900/30 p-3">
+              <div className="flex items-center justify-between">
+                <Label>Paste your full session</Label>
+                <Badge variant="neutral">AI can evaluate this</Badge>
+              </div>
+              <Textarea
+                value={sessionLog}
+                onChange={(e) => setSessionLog(e.target.value)}
+                placeholder={WEIGHTLIFTING_PLACEHOLDER}
+                rows={12}
+                className="text-xs leading-relaxed"
+              />
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={evaluateSession}
+                  disabled={evaluating || !sessionLog.trim()}
+                >
+                  <Sparkles className="h-4 w-4" />
+                  {evaluating ? 'Evaluating…' : 'Evaluate with AI coach'}
+                </Button>
+                {sessionLog.trim() !== '' && (
+                  <span className="text-[11px] text-zinc-500">
+                    Saved with the workout — your coach also reads it in future advice.
+                  </span>
+                )}
+              </div>
+              {evaluation && (
+                <div className="animate-fade-in-up rounded-xl border border-brand-700/30 bg-brand-950/20 p-3">
+                  <div className="mb-2 flex items-center gap-2 text-sm font-medium text-brand-200">
+                    <Sparkles className="h-4 w-4 text-brand-400" /> Coach's evaluation
+                  </div>
+                  <Markdown text={evaluation} />
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Per-type detail fields — each activity logs its own metrics. */}
           {config.fields.length > 0 && (

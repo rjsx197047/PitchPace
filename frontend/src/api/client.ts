@@ -269,6 +269,13 @@ export const parseWorkoutText = (text: string) =>
     api_key: getApiKey() ?? undefined,
   });
 
+/** Send a freeform session (e.g. a whole lifting day) for the AI coach to evaluate. */
+export const evaluateWorkoutText = (text: string) =>
+  postJson<{ evaluation: string; backend: string }>('/api/workouts/evaluate', {
+    text,
+    api_key: getApiKey() ?? undefined,
+  });
+
 // ── Film Room (local match-video tagging) ───────────────────────────────
 
 export interface FilmTag {
